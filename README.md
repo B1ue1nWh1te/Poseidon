@@ -119,7 +119,7 @@ account=Account(chain,Account.CreateNewAccount()[1])
 
 ### 做题的基本模板
 
-'''python
+```python
 from Poseidon_Blockchain import \*
 from loguru import logger
 import solcx
@@ -149,7 +149,7 @@ transactionData = contract.functions.functionName(arg1, arg2).buildTransaction({
 transactionReceipt = account.SendTransactionToChain(transactionData["to"], transactionData["data"], transactionData["value"])
 
 logger.success("Execution completed.")
-'''
+```
 
 ## Crypto 模块
 
