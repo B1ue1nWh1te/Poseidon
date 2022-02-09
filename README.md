@@ -120,7 +120,7 @@ account=Account(chain,Account.CreateNewAccount()[1])
 ### 做题的基本模板
 
 ```python
-from Poseidon_Blockchain import \*
+from Poseidon_Blockchain import *
 from loguru import logger
 import solcx
 
