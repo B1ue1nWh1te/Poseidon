@@ -117,6 +117,40 @@ account=Account(chain,Account.CreateNewAccount()[1])
 
 将 solidity 合约代码编译成 abi 和 bytecode-`SolidityToAbiAndBytecode(Course,ContractName)`：输出、返回并保存`(Abi, Bytecode)`
 
+### 做题的基本模板
+
+'''python
+from Poseidon_Blockchain import \*
+from loguru import logger
+import solcx
+
+#安装指定版本的 solidity
+SolidityVersion = solcx.install_solc('')
+solcx.set_solc_version(SolidityVersion)
+logger.log(f"Solidity Version:{SolidityVersion}")
+
+#连接私链的 RPC 使用私钥生成账户
+chain = Chain("")
+account = Account(chain, "0x")
+contractAddress = Web3.toChecksumAddress("")
+
+#编译合约代码
+abi, bytecode = SolidityToAbiAndBytecode(".sol", "")
+contract = chain.Net.eth.contract(address=contractAddress, abi=abi)
+
+#调用合约函数并发出交易
+transactionData = contract.functions.functionName(params).buildTransaction()
+transactionReceipt = account.SendTransactionToChain(transactionData["to"], transactionData["data"])
+
+#将要调用的函数进行编码
+arg1 = contract.encodeABI(fn_name="functionName")
+arg2 = contract.encodeABI(fn_name="functionName", args=[arg1])
+transactionData = contract.functions.functionName(arg1, arg2).buildTransaction({'value': 0})
+transactionReceipt = account.SendTransactionToChain(transactionData["to"], transactionData["data"], transactionData["value"])
+
+logger.success("Execution completed.")
+'''
+
 ## Crypto 模块
 
 ```python
