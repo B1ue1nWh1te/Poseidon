@@ -151,7 +151,7 @@ class Account():
         Balance = self.Chain.GetBalanceByAddress(self.Address)
         return Balance
 
-    def SendTransactionToChain(self, To: str, Data: str, Value=0, Gas=1000000) -> dict:
+    def SendTransactionToChain(self, To: str, Data: str, Value=0, Gas=3000000) -> dict:
         Txn = {
             "from": self.Address,
             "to": Web3.toChecksumAddress(To),
@@ -207,7 +207,7 @@ def SolidityToAbiAndBytecode(Course: str, ContractName: str) -> tuple:
     ContractData = CompiledSol[f'<stdin>:{ContractName}']
     Abi = ContractData['abi']
     Bytecode = ContractData['bin']
-    with open(f'{ContractName}.json', 'w') as json:
-        json.dump((Abi, Bytecode), json)
+    with open(f'{ContractName}.json', 'w') as f:
+        json.dump((Abi, Bytecode), f)
     logger.info(f"\n[CompileContract]\n[Abi]{Abi}\n[Bytecode]{Bytecode}")
     return (Abi, Bytecode)
