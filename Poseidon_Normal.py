@@ -59,22 +59,22 @@ def File_Bytes(Course):
 
 
 def SHA1(Text):
-    Hash = hashlib.sha1().update(Text.encode()).hexdigest()
+    Hash = hashlib.sha1(Text.encode()).hexdigest()
     return Hash
 
 
 def SHA256(Text):
-    Hash = hashlib.sha256().update(Text.encode()).hexdigest()
+    Hash = hashlib.sha256(Text.encode()).hexdigest()
     return Hash
 
 
 def SHA512(Text):
-    Hash = hashlib.sha512().update(Text.encode()).hexdigest()
+    Hash = hashlib.sha512(Text.encode()).hexdigest()
     return Hash
 
 
 def MD5(Text):
-    Hash = hashlib.md5().update(Text.encode()).hexdigest()
+    Hash = hashlib.md5(Text.encode()).hexdigest()
     return Hash
 
 
@@ -141,12 +141,12 @@ def RGBToImage(RGBList, X, Y, Mode="Column"):
         for i in range(X):
             for j in range(Y):
                 Index = i * Y + j
-                Board.putpixel((i, j), tuple(eval(RGBList[Index])))
+                Board.putpixel((i, j), tuple(RGBList[Index]))
     elif Mode == "Row":
         for i in range(Y):
             for j in range(X):
                 Index = i * X + j
-                Board.putpixel((j, i), tuple(eval(RGBList[Index])))
+                Board.putpixel((j, i), tuple(RGBList[Index]))
     Board.save("RGBToImageResult.png")
     Board.show()
 
