@@ -6,9 +6,7 @@
 
 海神波塞冬
 
-一个也许有用的 CTF 工具
-
-它会随着我技术水平的提升而不断更新
+用于快速编写 CTF 中以太坊和密码学题目解题脚本的工具
 
 [![Lisence](https://img.shields.io/github/license/B1ue1nWh1te/Poseidon)](https://github.com/B1ue1nWh1te/Poseidon/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon?include_prereleases)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
@@ -19,13 +17,7 @@
 
 # 前言
 
-本工具仅适用于 CTF 比赛做题，请遵守信息安全相关的法律法规。
-
-目前`海神波塞冬`含有四个模块，分别是`Blockchain`、`Crypto`、`Normal`、`Pwn`。
-
-由于我个人研究方向的原因，其中`Blockchain`和`Crypto`这两个模块的功能较为全面，有较高的实用价值。而`Normal`和`Pwn`两个模块的功能是比较少的，以后会慢慢更新。
-
-同时欢迎你与我一起共同完善这个项目，让它在未来能够真正成为像它的名字一般无比强大的存在，`海神波塞冬`。
+本工具仅可用于 CTF 比赛解题。功能已基本完善，具体使用得自己通过函数名语义进行探索，后续可能会更新功能吧..(如果有的话)
 
 # 开始使用
 
@@ -67,89 +59,11 @@ flag{Hello_World!-Respect_Poseidon's_Authority!}
 
 ## Blockchain 模块
 
-一般情况下，需要先初始化`Chain`，再初始化`Account`，才可正常使用全部功能。
-
-### Chain 类
-
-初始化 Chain 连接上一条私有链(由 geth 搭建)：
-
 ```python
 from Poseidon_Blockchain import *
-
-chain=Chain("http://localhost:8545")
 ```
 
-展示链的基本信息-`Chain.ShowBasicInformation()`：输出`ClientVersion`、`ChainId`、`BlockNumber`、`PeerCount`
-
-展示区块的基本信息-`Chain.ShowBlockInformation(BlockId)`：输出`BlockNumber`、`CoinBase`、`TransactionCount`、`TransactionHashs`、`ExtraData`、`ProofOfAuthorityData`、`TimeStamp`
-
-展示交易的基本信息（通过交易哈希）-`Chain.ShowTransactionByHash(TransactionHash)`：输出`BlockNumber`、`TransactionIndex`、`From`、`To`、`InputData`、`Value`
-
-展示交易的基本信息（通过区块和交易索引）-`Chain.ShowTransactionByBlockIdAndIndex(BlockId,TransactionId)`：输出`BlockNumber`、`TransactionIndex`、`From`、`To`、`InputData`、`Value`
-
-获取某个账户的余额-`Chain.GetBalanceByAddress(Address)`：输出并返回`Balance`，单位为`wei`
-
-获取某个合约的字节码-`Chain.GetCodeByAddress(Address)`：输出并返回`Bytecode`
-
-获取某个合约的某个位置的存储-`Chain.GetStorage(Address,Index)`：输出并返回`Storage`
-
-从下标零开始按数量读取某个合约的存储-`Chain.DumpStorage(Address,Count)`：输出并返回`Storage`，类型为`list`
-
-### Account 类
-
-创建新账户并初始化 Account 并连接至先前定义的链：
-
-```python
-......
-
-account=Account(chain,Account.CreateNewAccount()[1])
-```
-
-获取自身余额-`Account.GetSelfBalance()`：输出并返回`Balance`，单位为`wei`。
-
-发送交易-`Account.SendTransactionToChain(To,Data,Value, Gas)`：输出`Txn`、`TransactionHash`、`TransactionReceipt`，返回`TransactionReceipt`
-
-部署合约-`Account.DeployContractToChain(Abi,Bytecode,Value)`：输出`Txn`、`TransactionHash`、`TransactionReceipt`、`ContractAddress`，返回`(ContractAddress, Contract)`
-
-创建新账户-`Account.CreateNewAccount()`：输出并返回`(Address, PrivateKey)`
-
-### 其他
-
-将 solidity 合约代码编译成 abi 和 bytecode-`SolidityToAbiAndBytecode(Course,ContractName)`：输出、返回并保存`(Abi, Bytecode)`
-
-### 做题的基本模板
-
-```python
-from Poseidon_Blockchain import *
-from loguru import logger
-import solcx
-
-#安装指定版本的 solidity
-SolidityVersion = solcx.install_solc('')
-solcx.set_solc_version(SolidityVersion)
-logger.log(f"Solidity Version:{SolidityVersion}")
-
-#连接私链的 RPC 使用私钥生成账户
-chain = Chain("")
-account = Account(chain, "0x")
-contractAddress = Web3.toChecksumAddress("")
-
-#编译合约代码
-abi, bytecode = SolidityToAbiAndBytecode(".sol", "")
-contract = chain.Net.eth.contract(address=contractAddress, abi=abi)
-
-#调用合约函数并发出交易
-transactionData = contract.functions.functionName(params).buildTransaction()
-transactionReceipt = account.SendTransactionToChain(transactionData["to"], transactionData["data"])
-
-#将要调用的函数进行编码
-arg1 = contract.encodeABI(fn_name="functionName")
-arg2 = contract.encodeABI(fn_name="functionName", args=[arg1])
-transactionData = contract.functions.functionName(arg1, arg2).buildTransaction({'value': 0})
-transactionReceipt = account.SendTransactionToChain(transactionData["to"], transactionData["data"], transactionData["value"])
-
-logger.success("Execution completed.")
-```
+一般情况下，需要先初始化`Chain`，再初始化`Account`，之后就可以使用该账户发送交易到指定链上了，如果需要用到合约，还需要初始化`Contract`，才可正常使用全部功能。具体使用可参考文章[Ethernaut 部分题目 Writeup](https://www.seaeye.cn/archives/468.html)中的脚本样例。
 
 ## Crypto 模块
 
@@ -174,7 +88,7 @@ from Poseidon_Normal import *
 ## Pwn 模块
 
 ```python
-from Poseidon_Pwn import *
+from Poseidon_PoW import *
 ```
 
 目前支持：

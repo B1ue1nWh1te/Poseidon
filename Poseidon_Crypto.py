@@ -177,9 +177,9 @@ def Vigenere_Encrypt(Text, Key):
             index += 1
     EncryptedText = ""
     for i in range(len(Text)):
-        if i.isupper():
+        if Text[i].isupper():
             EncryptedText += chr((ord(Text[i]) + ord(Key[i].upper()) - 2 * ord('A')) % 26 + ord('A'))
-        elif i.islower():
+        elif Text[i].islower():
             EncryptedText += chr((ord(Text[i]) + ord(Key[i].lower()) - 2 * ord('a')) % 26 + ord('a'))
         else:
             EncryptedText += Text[i]
@@ -200,9 +200,9 @@ def Vigenere_Decrypt(Text, Key):
             index = index + 1
     DecryptedText = ""
     for i in range(len(Text)):
-        if i.isupper():
+        if Text[i].isupper():
             DecryptedText += chr((ord(Text[i]) - ord(Key[i].upper())) % 26 + ord('A'))
-        elif i.islower():
+        elif Text[i].islower():
             DecryptedText += chr((ord(Text[i]) - ord(Key[i].lower())) % 26 + ord('a'))
         else:
             DecryptedText += Text[i]
@@ -438,7 +438,7 @@ def RSA_Broadcast_Attack(cs, e, ns):
     prod = reduce(lambda a, b: a * b, ns)
     for ni, ai in zip(ns, cs):
         p = prod / ni
-        s += ai + gmpy2.invert(p, ni) * p
+        s += ai * gmpy2.invert(p, ni) * p
     x = s % prod
     m = long_to_bytes(gmpy2.iroot(x, e)).decode()
     return m
