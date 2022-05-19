@@ -3,6 +3,7 @@ from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 from Crypto.Util.number import bytes_to_long
 from solcx import compile_source
+import solcx
 import json
 
 
@@ -102,7 +103,7 @@ class Account():
         Txn = {
             "from": self.Address,
             "to": Web3.toChecksumAddress(To),
-            "gasPrice": self.Net.eth.gas_price * 1.5,
+            "gasPrice": self.Net.eth.gas_price * 2,
             "gas": Gas,
             "nonce": self.Net.eth.get_transaction_count(self.Address),
             "value": Value,
@@ -116,14 +117,14 @@ class Account():
         logger.success(f"\n[ConfirmTransaction]\n[TransactionHash]{TransactionHash}\n[TransactionReceipt]{TransactionReceipt}")
         return TransactionReceipt
 
-    def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0) -> str:
-        Contract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
+    def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> str:
+        DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
         # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
-        TransactionData = Contract.constructor().buildTransaction({"value": Value})
+        TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
         Txn = {
             "from": self.Address,
-            "gasPrice": self.Net.eth.gas_price * 1.5,
-            "gas": Contract.constructor().estimateGas(),
+            "gasPrice": self.Net.eth.gas_price * 2,
+            "gas": TransactionData["gas"],
             "nonce": self.Net.eth.get_transaction_count(self.Address),
             "value": TransactionData["value"],
             "data": TransactionData["data"],
@@ -134,18 +135,9 @@ class Account():
         logger.info(f"\n[DeployContract]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
         TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
         ContractAddress = TransactionReceipt.contractAddress
-        Contract = Contract(Account, ContractAddress, ABI)
+        DeployedContract = Contract(self, ContractAddress, ABI)
         logger.success(f"\n[ConfirmDeploy]\n[TransactionHash]{TransactionHash}\n[ContractAddress]{ContractAddress}")
-        return (ContractAddress, Contract)
-
-    @staticmethod
-    def CreateNewAccount() -> tuple:
-        Net = Web3()
-        Keys = Net.eth.account.create()
-        Address = Net.toChecksumAddress(Keys.address)
-        PrivateKey = hex(bytes_to_long(Keys.privateKey))
-        logger.success(f"\n[NewAccount]\n[Address]{Address}\n[PrivateKey]{PrivateKey}")
-        return (Address, PrivateKey)
+        return (ContractAddress, DeployedContract)
 
 
 class Contract():
@@ -167,9 +159,31 @@ class Contract():
         TransactionReceipt = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
         return TransactionReceipt
 
+    def ReadOnlyCallFunction(self, FunctionName: str, *FunctionArguments) -> dict:
+        Data = self.Instance.functions[FunctionName](*FunctionArguments).call()
+        logger.info(f"\n[ReadOnlyCallFunction]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}\n[result]{Data}")
+        return Data
+
     def EncodeABI(self, FunctionName: str, *FunctionArguments) -> str:
         CallData = self.Instance.encodeABI(fn_name=FunctionName, args=FunctionArguments)
         return CallData
+
+
+class Utils():
+    @staticmethod
+    def SwitchSolidityVersion(SolidityVersion: str) -> str:
+        solcx.install_solc(SolidityVersion)
+        solcx.set_solc_version(SolidityVersion)
+        logger.success(f"\n[SwitchSolidityVersion]Current Version:{SolidityVersion}")
+
+    @staticmethod
+    def CreateNewAccount() -> tuple:
+        Net = Web3()
+        Keys = Net.eth.account.create()
+        Address = Net.toChecksumAddress(Keys.address)
+        PrivateKey = hex(bytes_to_long(Keys.privateKey))
+        logger.success(f"\n[NewAccount]\n[Address]{Address}\n[PrivateKey]{PrivateKey}")
+        return (Address, PrivateKey)
 
     @staticmethod
     def SolidityToABIAndBytecode(Course: str, ContractName: str) -> tuple:
@@ -183,12 +197,11 @@ class Contract():
         logger.info(f"\n[CompileContract]\n[Course]{Course}\n[ContractName]{ContractName}\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
         return (ABI, Bytecode)
 
-
-'''
-Web3.keccak()
-Web3.solidityKeccak()
-web3.constants.ADDRESS_ZERO
-web3.constants.HASH_ZERO
-web3.constants.WEI_PER_ETHER
-web3.constants.MAX_INT
-'''
+    '''
+    Web3.keccak()
+    Web3.solidityKeccak()
+    web3.constants.ADDRESS_ZERO
+    web3.constants.HASH_ZERO
+    web3.constants.WEI_PER_ETHER
+    web3.constants.MAX_INT
+    '''
