@@ -1,8 +1,8 @@
-from loguru import logger
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
+from eth_account.messages import encode_defunct
 from Crypto.Util.number import bytes_to_long
-from solcx import compile_source
+from loguru import logger
 import solcx
 import json
 
@@ -14,72 +14,136 @@ class Chain():
             self.Net = Net
             self.Net.middleware_onion.inject(geth_poa_middleware, layer=0)
             logger.success(f"\n[ConnectToChain]Successfully connected to [{RPCUrl}].")
-            # self.ShowBasicInformation()
-            # self.ShowBlockInformation()
+            self.GetBasicInformation()
+            self.GetBlockInformation("latest")
         else:
             self.Net = None
             logger.error(f"\n[ConnectToChain]Failed to connect to [{RPCUrl}].")
+            raise Exception("Failed to connect to chain.")
 
-    def ShowBasicInformation(self) -> None:
-        ClientVersion = self.Net.clientVersion
-        ChainId = self.Net.eth.chainId
-        BlockNumber = self.Net.eth.block_number
-        PeerCount = self.Net.net.peer_count
-        logger.info(f"\n[BasicInformation]\n[ClientVersion]{ClientVersion}\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[PeerCount]{PeerCount}")
+    def GetBasicInformation(self) -> tuple:
+        try:
+            ChainId = self.Net.eth.chainId
+            BlockNumber = self.Net.eth.block_number
+            GasPrice = Web3.fromWei(self.Net.eth.gas_price, "gwei")
+            MaxPriorityFee = Web3.fromWei(self.Net.eth.max_priority_fee, "gwei")
+            ClientVersion = self.Net.clientVersion
+            logger.success(f"\n[BasicInformation]\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[MaxPriorityFee]{MaxPriorityFee} Gwei\n[ClientVersion]{ClientVersion}")
+            return (ChainId, BlockNumber, GasPrice, MaxPriorityFee, ClientVersion)
+        except:
+            logger.error(f"\n[BasicInformation]Failed to get basic information.")
+            return None
 
-    def ShowBlockInformation(self, BlockID="latest") -> None:
-        Data = self.Net.eth.get_block(BlockID)
-        BlockNumber = Data["number"]
-        TimeStamp = Data["timestamp"]
-        CoinBase = Data["miner"]
-        TransactionCount = len(Data["transactions"])
-        # TransactionHashs = [hex(bytes_to_long(bytes(i))) for i in Data["transactions"]]
-        # ExtraData = Data.get("extraData", "None")
-        # ProofOfAuthorityData = Data.get("proofOfAuthorityData", "None")
-        logger.info(f"\n[BlockInformation][{BlockID}]\n[BlockNumber]{BlockNumber}\n[TimeStamp]{TimeStamp}\n[CoinBase]{CoinBase}\n[TransactionCount]{TransactionCount}")
+    def GetBlockInformation(self, BlockID="latest") -> tuple:
+        try:
+            Info = self.Net.eth.get_block(BlockID)
+            BlockHash = Info.hash.hex()
+            BlockNumber = Info.number
+            BlockTimeStamp = Info.timestamp
+            BlockTransactionAmount = len(Info.transactions)
+            # TransactionHashs = [i.hex() for i in Data["transactions"]]
+            # ExtraData = Data.get("extraData", "None")
+            # ProofOfAuthorityData = Data.get("proofOfAuthorityData", "None")
+            logger.success(f"\n[BlockInformation][{BlockID}]\n[Hash]{BlockHash}\n[Number]{BlockNumber}\n[TimeStamp]{BlockTimeStamp}\n[TransactionAmount]{BlockTransactionAmount}")
+            return (BlockHash, BlockNumber, BlockTimeStamp, BlockTransactionAmount)
+        except:
+            logger.error(f"\n[BlockInformation]Failed to get block [{BlockID}] information.")
+            return None
 
-    def ShowTransactionByHash(self, TransactionHash: str) -> None:
-        Data = self.Net.eth.get_transaction(TransactionHash)
-        BlockNumber = Data["blockNumber"]
-        TransactionIndex = Data["transactionIndex"]
-        From = Data["from"]
-        To = Data["to"]
-        InputData = Data["input"]
-        Value = Data["value"]
-        logger.info(f"\n[TransactionInformation][{TransactionHash}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Value]{Value}")
+    def GetTransactionByHash(self, TransactionHash: str) -> tuple:
+        try:
+            Info = self.Net.eth.get_transaction(TransactionHash)
+            BlockNumber = Info.blockNumber
+            TransactionIndex = Info.transactionIndex
+            From = Info["from"]
+            To = Info.to
+            InputData = Info.input
+            Nonce = Info.nonce
+            Value = Info.value
+            Gas = Info.gas
+            GasPrice = Info.gasPrice
+            if GasPrice != None:
+                TransactionType = "Traditional"
+                GasPrice = Web3.fromWei(GasPrice, "gwei")
+                logger.info(
+                    f"\n[TransactionInformation][{TransactionHash}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[GasPrice]{GasPrice} Gwei")
+                return (BlockNumber, TransactionIndex, TransactionType, From, To, InputData, Nonce, Value, Gas, GasPrice)
+            else:
+                TransactionType = "EIP-1559"
+                MaxFeePerGas = Web3.fromWei(Info.maxFeePerGas, "gwei")
+                MaxPriorityFeePerGas = Web3.fromWei(Info.maxPriorityFeePerGas, "gwei")
+                logger.info(
+                    f"\n[TransactionInformation][{TransactionHash}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
+                return (BlockNumber, TransactionIndex, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
+        except:
+            logger.error(f"\n[TransactionInformation]Failed to get transaction [{TransactionHash}] information.")
+            return None
 
-    def ShowTransactionByBlockIdAndIndex(self, BlockID, TransactionID: int) -> None:
-        Data = self.Net.eth.get_transaction_by_block(BlockID, TransactionID)
-        BlockNumber = Data["blockNumber"]
-        TransactionIndex = Data["transactionIndex"]
-        From = Data["from"]
-        To = Data["to"]
-        InputData = Data["input"]
-        Value = Data["value"]
-        logger.info(
-            f"\n[TransactionInformation][{BlockID}][{TransactionID}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Value]{Value}")
+    def GetTransactionByBlockIdAndIndex(self, BlockID, TransactionIndex: int) -> tuple:
+        try:
+            Info = self.Net.eth.get_transaction_by_block(BlockID, TransactionIndex)
+            BlockNumber = Info.blockNumber
+            TransactionHash = Info.hash.hex()
+            From = Info["from"]
+            To = Info.to
+            InputData = Info.input
+            Nonce = Info.nonce
+            Value = Info.value
+            Gas = Info.gas
+            GasPrice = Info.gasPrice
+            if GasPrice != None:
+                TransactionType = "Traditional"
+                GasPrice = Web3.fromWei(GasPrice, "gwei")
+                logger.info(
+                    f"\n[TransactionInformation][{BlockID}][{TransactionIndex}]\n[BlockNumber]{BlockNumber}\n[TransactionHash]{TransactionHash}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[GasPrice]{GasPrice} Gwei")
+                return (BlockNumber, TransactionHash, TransactionType, From, To, InputData, Nonce, Value, Gas, GasPrice)
+            else:
+                TransactionType = "EIP-1559"
+                MaxFeePerGas = Web3.fromWei(Info.maxFeePerGas, "gwei")
+                MaxPriorityFeePerGas = Web3.fromWei(Info.maxPriorityFeePerGas, "gwei")
+                logger.info(
+                    f"\n[TransactionInformation][{BlockID}][{TransactionIndex}]\n[BlockNumber]{BlockNumber}\n[TransactionHash]{TransactionHash}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
+                return (BlockNumber, TransactionHash, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
+        except:
+            logger.error(f"\n[TransactionInformation]Failed to get transaction [{BlockID}][{TransactionIndex}] information.")
+            return None
 
-    def GetBalanceByAddress(self, Address: str) -> int:
-        Balance = self.Net.eth.get_balance(Address)
-        logger.info(f"\n[Balance][{Address}]\n[{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]")
-        return Balance
+    def GetBalance(self, Address: str) -> int:
+        try:
+            Balance = self.Net.eth.get_balance(Address)
+            logger.success(f"\n[GetBalance][{Address}]\n[{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]")
+            return Balance
+        except:
+            logger.error(f"\n[GetBalance]Failed to get [{Address}] balance.")
+            return None
 
-    def GetCodeByAddress(self, Address: str) -> str:
-        Code = hex(bytes_to_long(self.Net.eth.get_code(Address)))
-        logger.info(f"\n[Bytecode][{Address}]\n{Code}")
-        return Code
+    def GetCode(self, Address: str) -> str:
+        try:
+            Code = self.Net.eth.get_code(Address).hex()
+            logger.success(f"\n[GetCode][{Address}]\n{Code}")
+            return Code
+        except:
+            logger.error(f"\n[GetCode]Failed to get [{Address}] code.")
+            return None
 
     def GetStorage(self, Address: str, Index: int) -> str:
-        Data = bytes_to_long(self.Net.eth.get_storage_at(Address, Index))
-        DataHex = hex(Data)
-        logger.info(f"\n[Storage][{Address}][{Index}]\n[Hex][{DataHex}]<=>[Dec][{Data}]")
-        return Data
+        try:
+            Data = self.Net.eth.get_storage_at(Address, Index).hex()
+            logger.success(f"\n[GetStorage][{Address}][{Index}]\n[Hex][{Data}]<=>[Dec][{int(Data,16)}]")
+            return Data
+        except:
+            logger.error(f"\n[GetStorage]Failed to get [{Address}][{Index}] storage.")
+            return None
 
     def DumpStorage(self, Address: str, Count: int) -> list:
-        Data = [hex(bytes_to_long(self.Net.eth.get_storage_at(Address, i))) for i in range(Count)]
-        Temp = '\n'.join(Data)
-        logger.info(f"\n[Storage][{Address}][slot 0 ... {Count-1}]\n{Temp}")
-        return Data
+        try:
+            Data = [self.Net.eth.get_storage_at(Address, i).hex() for i in range(Count)]
+            Temp = '\n'.join(Data)
+            logger.info(f"\n[DumpStorage][{Address}][slot 0 ... {Count-1}]\n{Temp}")
+            return Data
+        except:
+            logger.error(f"\n[DumpStorage]Failed to dump [{Address}][0-{Count-1}] storages.")
+            return None
 
 
 class Account():
@@ -91,53 +155,163 @@ class Account():
             self.Address = Web3.toChecksumAddress(AccountTemp.address)
             self.PrivateKey = AccountTemp.privateKey
             self.Net.eth.default_account = self.Address
-            logger.success(f"\n[ImportAccount]Successfully import account. [Address]{self.Address}")
+            logger.success(f"\n[ImportAccount]Successfully import account [{self.Address}].")
+            self.GetSelfBalance()
         except:
-            logger.error(f"\n[ImportAccount]Failed to import through the private key of [{PrivateKey}].")
+            logger.error(f"\n[ImportAccount]Failed to import account through the private key of [{PrivateKey}].")
+            raise Exception("Failed to import account.")
 
     def GetSelfBalance(self) -> int:
-        Balance = self.Chain.GetBalanceByAddress(self.Address)
+        Balance = self.Chain.GetBalance(self.Address)
+        if Balance == 0:
+            logger.warning(f"\n[GetSelfBalance]Warning: This account's balance is insufficient to pay transactions fee.")
         return Balance
 
-    def SendTransaction(self, To: str, Data: str, Value: int = 0, Gas: int = 3000000) -> dict:
-        Txn = {
-            "from": self.Address,
-            "to": Web3.toChecksumAddress(To),
-            "gasPrice": self.Net.eth.gas_price * 2,
-            "gas": Gas,
-            "nonce": self.Net.eth.get_transaction_count(self.Address),
-            "value": Value,
-            "data": Data,
-            "chainId": self.Net.eth.chainId
-        }
-        SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
-        TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
-        logger.info(f"\n[SendTransaction]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
-        TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
-        logger.success(f"\n[ConfirmTransaction]\n[TransactionHash]{TransactionHash}\n[TransactionReceipt]{TransactionReceipt}")
-        return TransactionReceipt
+    def SendTransaction(self, To: str, Data: str, Value: int = 0, Gas: int = 1000000) -> tuple:
+        try:
+            Txn = {
+                "from": self.Address,
+                "to": Web3.toChecksumAddress(To),
+                "nonce": self.Net.eth.get_transaction_count(self.Address),
+                "value": Value,
+                "data": Data,
+                "gas": Gas,
+                "gasPrice": round(self.Net.eth.gas_price * 1.2),
+                "chainId": self.Net.eth.chainId
+            }
+            SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
+            TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
+            logger.info(f"\n[SendTransaction][Traditional]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
+            TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
+            Status = TransactionReceipt.status
+            if Status:
+                BlockNumber = TransactionReceipt.blockNumber
+                GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
+                logger.success(f"\n[ConfirmTransaction][Traditional][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber} [GasUsed]{GasUsed}\n[Logs]{Logs}")
+                return (TransactionHash, Status, BlockNumber, GasUsed, Logs)
+            else:
+                logger.error(f"\n[ConfirmTransaction][Traditional][Fail]\n[TransactionHash]{TransactionHash}")
+                return (TransactionHash, Status)
+        except:
+            logger.error(f"\n[SendTransaction][Traditional]Failed to send transaction.")
+            return None
 
-    def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> str:
-        DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
-        # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
-        TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
-        Txn = {
-            "from": self.Address,
-            "gasPrice": self.Net.eth.gas_price * 2,
-            "gas": TransactionData["gas"],
-            "nonce": self.Net.eth.get_transaction_count(self.Address),
-            "value": TransactionData["value"],
-            "data": TransactionData["data"],
-            "chainId": self.Net.eth.chainId
-        }
-        SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
-        TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
-        logger.info(f"\n[DeployContract]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
-        TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
-        ContractAddress = TransactionReceipt.contractAddress
-        DeployedContract = Contract(self, ContractAddress, ABI)
-        logger.success(f"\n[ConfirmDeploy]\n[TransactionHash]{TransactionHash}\n[ContractAddress]{ContractAddress}")
-        return (ContractAddress, DeployedContract)
+    def SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, Gas: int = 1000000) -> tuple:
+        try:
+            Txn = {
+                "from": self.Address,
+                "to": Web3.toChecksumAddress(To),
+                "nonce": self.Net.eth.get_transaction_count(self.Address),
+                "value": Value,
+                "data": Data,
+                "gas": Gas,
+                "maxFeePerGas": self.Net.eth.max_priority_fee * 2,
+                "maxPriorityFeePerGas": round(self.Net.eth.max_priority_fee * 1.2),
+                "chainId": self.Net.eth.chainId
+            }
+            SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
+            TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
+            logger.info(f"\n[SendTransaction][EIP-1559]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
+            TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
+            Status = TransactionReceipt.status
+            if Status:
+                BlockNumber = TransactionReceipt.blockNumber
+                GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
+                logger.success(f"\n[ConfirmTransaction][EIP-1559][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber} [GasUsed]{GasUsed}\n[Logs]{Logs}")
+                return (TransactionHash, Status, BlockNumber, GasUsed, Logs)
+            else:
+                logger.error(f"\n[ConfirmTransaction][EIP-1559][Fail]\n[TransactionHash]{TransactionHash}")
+                return (TransactionHash, Status)
+        except:
+            logger.error(f"\n[SendTransaction][EIP-1559]Failed to send transaction.")
+            return None
+
+    def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
+        try:
+            DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
+            # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
+            TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
+            Txn = {
+                "from": self.Address,
+                "nonce": self.Net.eth.get_transaction_count(self.Address),
+                "value": TransactionData["value"],
+                "data": TransactionData["data"],
+                "gas": TransactionData["gas"],
+                "gasPrice": round(self.Net.eth.gas_price * 1.2),
+                "chainId": self.Net.eth.chainId
+            }
+            SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
+            TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
+            logger.info(f"\n[DeployContract][Traditional]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
+            TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
+            Status = TransactionReceipt.status
+            if Status:
+                ContractAddress = TransactionReceipt.contractAddress
+                BlockNumber = TransactionReceipt.blockNumber
+                GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
+                logger.success(f"\n[ConfirmDeploy][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber} [GasUsed]{GasUsed}\n[Logs]{Logs}\n[ContractAddress]{ContractAddress}")
+                DeployedContract = Contract(self, ContractAddress, ABI)
+                return (ContractAddress, DeployedContract)
+            else:
+                logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
+                return None
+        except:
+            logger.error(f"\n[DeployContract][Traditional]Failed to deploy contract.")
+            return None
+
+    def DeployContractByEIP1559(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
+        try:
+            DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
+            # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
+            TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
+            Txn = {
+                "from": self.Address,
+                "nonce": self.Net.eth.get_transaction_count(self.Address),
+                "value": TransactionData["value"],
+                "data": TransactionData["data"],
+                "gas": TransactionData["gas"],
+                "maxFeePerGas": self.Net.eth.max_priority_fee * 2,
+                "maxPriorityFeePerGas": round(self.Net.eth.max_priority_fee * 1.2),
+                "chainId": self.Net.eth.chainId
+            }
+            SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
+            TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
+            logger.info(f"\n[DeployContract][EIP-1559]\n[TransactionHash]{TransactionHash}\n[Txn]{Txn}")
+            TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=180)
+            Status = TransactionReceipt.status
+            if Status:
+                ContractAddress = TransactionReceipt.contractAddress
+                BlockNumber = TransactionReceipt.blockNumber
+                GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
+                logger.success(f"\n[ConfirmDeploy][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber} [GasUsed]{GasUsed}\n[Logs]{Logs}\n[ContractAddress]{ContractAddress}")
+                DeployedContract = Contract(self, ContractAddress, ABI)
+                return (ContractAddress, DeployedContract)
+            else:
+                logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
+                return None
+        except:
+            logger.error(f"\n[DeployContract][EIP-1559]Failed to deploy contract.")
+            return None
+
+    def SignMessage(self, Message: str) -> tuple:
+        try:
+            Temp = encode_defunct(text=Message)
+            SignedMessage = self.Net.eth.account.sign_message(Temp, private_key=self.PrivateKey)
+            SignedMessageHash = SignedMessage.messageHash.hex()
+            SignedMessageSignature = SignedMessage.signature.hex()
+            SignedMessageR = hex(SignedMessage.r)
+            SignedMessageS = hex(SignedMessage.s)
+            SignedMessageV = SignedMessage.v
+            logger.success(
+                f"\n[SignMessage][{self.Address}]\n[Message]{Message}\n[SignedMessageHash]{SignedMessageHash}\n[SignedMessageSignature]{SignedMessageSignature}\n[SignedMessageR]{SignedMessageR}\n[SignedMessageS]{SignedMessageS}\n[SignedMessageV]{SignedMessageV}")
+            return (Message, SignedMessageHash, SignedMessageSignature, SignedMessageR, SignedMessageS, SignedMessageV)
+        except:
+            logger.error(f"\n[SignMessage]Failed to sign messge [{Message}] by account [{self.Address}].")
+            return None
 
 
 class Contract():
@@ -148,33 +322,51 @@ class Contract():
             self.Address = Web3.toChecksumAddress(Address)
             self.ABI = ABI
             self.Instance = self.Net.eth.contract(address=Address, abi=ABI)
-            logger.success(f"\n[InstantiateContract][{self.Address}]Successfully instantiated contract. ")
+            logger.success(f"\n[InstantiateContract]Successfully instantiated contract [{self.Address}]. ")
         except:
-            logger.error(f"\n[InstantiateContract][{self.Address}]Failed to instantiated contract.")
+            logger.error(f"\n[InstantiateContract]Failed to instantiated contract [{self.Address}].")
+            raise Exception("Failed to instantiate contract.")
 
-    def CallFunction(self, FunctionName: str, *FunctionArguments) -> dict:
-        Txn = {"value": 0, "gas": self.Instance.functions[FunctionName](*FunctionArguments).estimateGas()}
-        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction(Txn)
-        logger.info(f"\n[CallFunction]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
-        TransactionReceipt = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
-        return TransactionReceipt
+    def CallFunction(self, FunctionName: str, *FunctionArguments) -> tuple:
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": 0})
+        logger.info(f"\n[CallFunction][Traditional][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
+        TransactionResult = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
+        return TransactionResult
 
-    def ReadOnlyCallFunction(self, FunctionName: str, *FunctionArguments) -> dict:
-        Data = self.Instance.functions[FunctionName](*FunctionArguments).call()
-        logger.info(f"\n[ReadOnlyCallFunction]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}\n[result]{Data}")
-        return Data
+    def CallFunctionByEIP1559(self, FunctionName: str, *FunctionArguments) -> tuple:
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": 0})
+        logger.info(f"\n[CallFunction][EIP-1559][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
+        TransactionResult = self.Account.SendTransactionByEIP1559(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
+        return TransactionResult
+
+    def ReadOnlyCallFunction(self, FunctionName: str, *FunctionArguments):
+        try:
+            Result = self.Instance.functions[FunctionName](*FunctionArguments).call()
+            logger.success(f"\n[CallFunction][ReadOnly][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Result]{Result}")
+            return Result
+        except:
+            logger.error(f"\n[CallFunction][ReadOnly]Failed to call readonly function [{FunctionName}{FunctionArguments}].")
+            return None
 
     def EncodeABI(self, FunctionName: str, *FunctionArguments) -> str:
-        CallData = self.Instance.encodeABI(fn_name=FunctionName, args=FunctionArguments)
-        return CallData
+        try:
+            CallData = self.Instance.encodeABI(fn_name=FunctionName, args=FunctionArguments)
+            return CallData
+        except:
+            logger.error(f"\n[EncodeABI]Failed to encode abi for [{FunctionName}{FunctionArguments}].")
+            return None
 
 
 class Utils():
     @staticmethod
-    def SwitchSolidityVersion(SolidityVersion: str) -> str:
-        solcx.install_solc(SolidityVersion)
-        solcx.set_solc_version(SolidityVersion)
-        logger.success(f"\n[SwitchSolidityVersion]Current Version:{SolidityVersion}")
+    def SwitchSolidityVersion(SolidityVersion: str):
+        try:
+            solcx.install_solc(SolidityVersion)
+            solcx.set_solc_version(SolidityVersion)
+            logger.success(f"\n[SwitchSolidityVersion]Current Version:{SolidityVersion}")
+        except:
+            logger.error(f"\n[SwitchSolidityVersion]Failed to switch to version [{SolidityVersion}].")
+            raise Exception("Failed to switch solidity version.")
 
     @staticmethod
     def CreateNewAccount() -> tuple:
@@ -182,20 +374,47 @@ class Utils():
         Keys = Net.eth.account.create()
         Address = Net.toChecksumAddress(Keys.address)
         PrivateKey = hex(bytes_to_long(Keys.privateKey))
-        logger.success(f"\n[NewAccount]\n[Address]{Address}\n[PrivateKey]{PrivateKey}")
+        logger.success(f"\n[CreateNewAccount]\n[Address]{Address}\n[PrivateKey]{PrivateKey}")
         return (Address, PrivateKey)
 
     @staticmethod
-    def SolidityToABIAndBytecode(Course: str, ContractName: str) -> tuple:
-        with open(Course, "r", encoding="utf-8") as sol:
-            CompiledSol = compile_source(sol.read())
-        ContractData = CompiledSol[f'<stdin>:{ContractName}']
-        ABI = ContractData['abi']
-        Bytecode = ContractData['bin']
-        with open(f'{ContractName}.json', 'w') as f:
-            json.dump((ABI, Bytecode), f)
-        logger.info(f"\n[CompileContract]\n[Course]{Course}\n[ContractName]{ContractName}\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
-        return (ABI, Bytecode)
+    def CompileSolidityToABIAndBytecode(FileCourse: str, ContractName: str) -> tuple:
+        try:
+            with open(FileCourse, "r", encoding="utf-8") as sol:
+                CompiledSol = solcx.compile_source(sol.read())
+            ContractData = CompiledSol[f'<stdin>:{ContractName}']
+            ABI = ContractData['abi']
+            Bytecode = ContractData['bin']
+            with open(f'{ContractName}.json', 'w') as f:
+                json.dump((ABI, Bytecode), f)
+            logger.success(f"\n[CompileContract]Success.\n[FileCourse]{FileCourse}\n[ContractName]{ContractName}\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
+            return (ABI, Bytecode)
+        except:
+            logger.error(f"\n[CompileContract]Failed to compile the contract [{FileCourse}][{ContractName}].")
+            raise Exception("Failed to compile the contract.")
+
+    @staticmethod
+    def RecoverMessage(Message: str, Signature: str) -> str:
+        try:
+            Net = Web3()
+            Temp = encode_defunct(text=Message)
+            Signer = Net.eth.account.recover_message(Temp, signature=Signature)
+            logger.success(f"\n[RecoverMessage]\n[Message]{Message}\n[Signature]{Signature}\n[Signer]{Signer}")
+            return Signer
+        except:
+            logger.error(f"\n[RecoverMessage]Failed to recover message [{Message}] with [{Signature}].")
+            return None
+
+    @staticmethod
+    def RecoverMessageByHash(MessageHash: str, Signature: str) -> str:
+        try:
+            Net = Web3()
+            Signer = Net.eth.account.recoverHash(MessageHash, signature=Signature)
+            logger.success(f"\n[RecoverMessageByHash]\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[Signer]{Signer}")
+            return Signer
+        except:
+            logger.error(f"\n[RecoverMessageByHash]Failed to recover message hash [{MessageHash}] with [{Signature}].")
+            return None
 
     '''
     Web3.keccak()
