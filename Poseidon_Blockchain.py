@@ -5,6 +5,7 @@ from Crypto.Util.number import bytes_to_long
 from loguru import logger
 import solcx
 import json
+import sys
 
 
 class Chain():
@@ -30,8 +31,9 @@ class Chain():
             ClientVersion = self.Net.clientVersion
             logger.success(f"\n[BasicInformation]\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[MaxPriorityFee]{MaxPriorityFee} Gwei\n[ClientVersion]{ClientVersion}")
             return (ChainId, BlockNumber, GasPrice, MaxPriorityFee, ClientVersion)
-        except:
-            logger.error(f"\n[BasicInformation]Failed to get basic information.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[BasicInformation]Failed to get basic information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetBlockInformation(self, BlockID="latest") -> tuple:
@@ -46,8 +48,9 @@ class Chain():
             # ProofOfAuthorityData = Data.get("proofOfAuthorityData", "None")
             logger.success(f"\n[BlockInformation][{BlockID}]\n[Hash]{BlockHash}\n[Number]{BlockNumber}\n[TimeStamp]{BlockTimeStamp}\n[TransactionAmount]{BlockTransactionAmount}")
             return (BlockHash, BlockNumber, BlockTimeStamp, BlockTransactionAmount)
-        except:
-            logger.error(f"\n[BlockInformation]Failed to get block [{BlockID}] information.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[BlockInformation]Failed to get block [{BlockID}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetTransactionByHash(self, TransactionHash: str) -> tuple:
@@ -75,8 +78,9 @@ class Chain():
                 logger.info(
                     f"\n[TransactionInformation][{TransactionHash}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
                 return (BlockNumber, TransactionIndex, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
-        except:
-            logger.error(f"\n[TransactionInformation]Failed to get transaction [{TransactionHash}] information.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[TransactionInformation]Failed to get transaction [{TransactionHash}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetTransactionByBlockIdAndIndex(self, BlockID, TransactionIndex: int) -> tuple:
@@ -104,8 +108,9 @@ class Chain():
                 logger.info(
                     f"\n[TransactionInformation][{BlockID}][{TransactionIndex}]\n[BlockNumber]{BlockNumber}\n[TransactionHash]{TransactionHash}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
                 return (BlockNumber, TransactionHash, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
-        except:
-            logger.error(f"\n[TransactionInformation]Failed to get transaction [{BlockID}][{TransactionIndex}] information.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[TransactionInformation]Failed to get transaction [{BlockID}][{TransactionIndex}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetBalance(self, Address: str) -> int:
@@ -113,8 +118,9 @@ class Chain():
             Balance = self.Net.eth.get_balance(Address)
             logger.success(f"\n[GetBalance][{Address}]\n[{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]")
             return Balance
-        except:
-            logger.error(f"\n[GetBalance]Failed to get [{Address}] balance.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[GetBalance]Failed to get [{Address}] balance.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetCode(self, Address: str) -> str:
@@ -122,8 +128,9 @@ class Chain():
             Code = self.Net.eth.get_code(Address).hex()
             logger.success(f"\n[GetCode][{Address}]\n{Code}")
             return Code
-        except:
-            logger.error(f"\n[GetCode]Failed to get [{Address}] code.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[GetCode]Failed to get [{Address}] code.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def GetStorage(self, Address: str, Index: int) -> str:
@@ -131,8 +138,9 @@ class Chain():
             Data = self.Net.eth.get_storage_at(Address, Index).hex()
             logger.success(f"\n[GetStorage][{Address}][{Index}]\n[Hex][{Data}]<=>[Dec][{int(Data,16)}]")
             return Data
-        except:
-            logger.error(f"\n[GetStorage]Failed to get [{Address}][{Index}] storage.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[GetStorage]Failed to get [{Address}][{Index}] storage.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def DumpStorage(self, Address: str, Count: int) -> list:
@@ -141,8 +149,9 @@ class Chain():
             Temp = '\n'.join(Data)
             logger.info(f"\n[DumpStorage][{Address}][slot 0 ... {Count-1}]\n{Temp}")
             return Data
-        except:
-            logger.error(f"\n[DumpStorage]Failed to dump [{Address}][0-{Count-1}] storages.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[DumpStorage]Failed to dump [{Address}][0-{Count-1}] storages.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
 
@@ -193,8 +202,9 @@ class Account():
             else:
                 logger.error(f"\n[ConfirmTransaction][Traditional][Fail]\n[TransactionHash]{TransactionHash}")
                 return (TransactionHash, Status)
-        except:
-            logger.error(f"\n[SendTransaction][Traditional]Failed to send transaction.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[SendTransaction][Traditional]Failed to send transaction.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, Gas: int = 1000000) -> tuple:
@@ -224,8 +234,9 @@ class Account():
             else:
                 logger.error(f"\n[ConfirmTransaction][EIP-1559][Fail]\n[TransactionHash]{TransactionHash}")
                 return (TransactionHash, Status)
-        except:
-            logger.error(f"\n[SendTransaction][EIP-1559]Failed to send transaction.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[SendTransaction][EIP-1559]Failed to send transaction.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
@@ -258,8 +269,9 @@ class Account():
             else:
                 logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
                 return None
-        except:
-            logger.error(f"\n[DeployContract][Traditional]Failed to deploy contract.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[DeployContract][Traditional]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def DeployContractByEIP1559(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
@@ -293,8 +305,9 @@ class Account():
             else:
                 logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
                 return None
-        except:
-            logger.error(f"\n[DeployContract][EIP-1559]Failed to deploy contract.")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[DeployContract][EIP-1559]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def SignMessage(self, Message: str) -> tuple:
@@ -309,8 +322,9 @@ class Account():
             logger.success(
                 f"\n[SignMessage][{self.Address}]\n[Message]{Message}\n[SignedMessageHash]{SignedMessageHash}\n[SignedMessageSignature]{SignedMessageSignature}\n[SignedMessageR]{SignedMessageR}\n[SignedMessageS]{SignedMessageS}\n[SignedMessageV]{SignedMessageV}")
             return (Message, SignedMessageHash, SignedMessageSignature, SignedMessageR, SignedMessageS, SignedMessageV)
-        except:
-            logger.error(f"\n[SignMessage]Failed to sign messge [{Message}] by account [{self.Address}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[SignMessage]Failed to sign messge [{Message}] by account [{self.Address}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
 
@@ -323,8 +337,9 @@ class Contract():
             self.ABI = ABI
             self.Instance = self.Net.eth.contract(address=Address, abi=ABI)
             logger.success(f"\n[InstantiateContract]Successfully instantiated contract [{self.Address}]. ")
-        except:
-            logger.error(f"\n[InstantiateContract]Failed to instantiated contract [{self.Address}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[InstantiateContract]Failed to instantiated contract [{self.Address}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to instantiate contract.")
 
     def CallFunction(self, FunctionName: str, *FunctionArguments) -> tuple:
@@ -344,16 +359,18 @@ class Contract():
             Result = self.Instance.functions[FunctionName](*FunctionArguments).call()
             logger.success(f"\n[CallFunction][ReadOnly][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Result]{Result}")
             return Result
-        except:
-            logger.error(f"\n[CallFunction][ReadOnly]Failed to call readonly function [{FunctionName}{FunctionArguments}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[CallFunction][ReadOnly]Failed to call readonly function [{FunctionName}{FunctionArguments}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def EncodeABI(self, FunctionName: str, *FunctionArguments) -> str:
         try:
             CallData = self.Instance.encodeABI(fn_name=FunctionName, args=FunctionArguments)
             return CallData
-        except:
-            logger.error(f"\n[EncodeABI]Failed to encode abi for [{FunctionName}{FunctionArguments}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[EncodeABI]Failed to encode abi for [{FunctionName}{FunctionArguments}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
 
@@ -364,8 +381,9 @@ class Utils():
             solcx.install_solc(SolidityVersion)
             solcx.set_solc_version(SolidityVersion)
             logger.success(f"\n[SwitchSolidityVersion]Current Version:{SolidityVersion}")
-        except:
-            logger.error(f"\n[SwitchSolidityVersion]Failed to switch to version [{SolidityVersion}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[SwitchSolidityVersion]Failed to switch to version [{SolidityVersion}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to switch solidity version.")
 
     @staticmethod
@@ -378,10 +396,13 @@ class Utils():
         return (Address, PrivateKey)
 
     @staticmethod
-    def CompileSolidityToABIAndBytecode(FileCourse: str, ContractName: str) -> tuple:
+    def CompileSolidityToABIAndBytecode(FileCourse: str, ContractName: str, AllowPaths=None) -> tuple:
         try:
             with open(FileCourse, "r", encoding="utf-8") as sol:
-                CompiledSol = solcx.compile_source(sol.read())
+                if AllowPaths == None:
+                    CompiledSol = solcx.compile_source(sol.read())
+                else:
+                    CompiledSol = solcx.compile_source(sol.read(), allow_paths=AllowPaths)
             ContractData = CompiledSol[f'<stdin>:{ContractName}']
             ABI = ContractData['abi']
             Bytecode = ContractData['bin']
@@ -389,8 +410,9 @@ class Utils():
                 json.dump((ABI, Bytecode), f)
             logger.success(f"\n[CompileContract]Success.\n[FileCourse]{FileCourse}\n[ContractName]{ContractName}\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
             return (ABI, Bytecode)
-        except:
-            logger.error(f"\n[CompileContract]Failed to compile the contract [{FileCourse}][{ContractName}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[CompileContract]Failed to compile the contract [{FileCourse}][{ContractName}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to compile the contract.")
 
     @staticmethod
@@ -401,8 +423,9 @@ class Utils():
             Signer = Net.eth.account.recover_message(Temp, signature=Signature)
             logger.success(f"\n[RecoverMessage]\n[Message]{Message}\n[Signature]{Signature}\n[Signer]{Signer}")
             return Signer
-        except:
-            logger.error(f"\n[RecoverMessage]Failed to recover message [{Message}] with [{Signature}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[RecoverMessage]Failed to recover message [{Message}] with [{Signature}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     @staticmethod
@@ -412,8 +435,9 @@ class Utils():
             Signer = Net.eth.account.recoverHash(MessageHash, signature=Signature)
             logger.success(f"\n[RecoverMessageByHash]\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[Signer]{Signer}")
             return Signer
-        except:
-            logger.error(f"\n[RecoverMessageByHash]Failed to recover message hash [{MessageHash}] with [{Signature}].")
+        except Exception:
+            ExceptionInformation = sys.exc_info()
+            logger.error(f"\n[RecoverMessageByHash]Failed to recover message hash [{MessageHash}] with [{Signature}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     '''
