@@ -1,22 +1,18 @@
-from web3 import Web3, HTTPProvider
-from web3.middleware import geth_poa_middleware
-from eth_account.messages import encode_defunct
-from Crypto.Util.number import bytes_to_long
+from web3 import Web3
 from loguru import logger
-import solcx
-import json
-import sys
+from sys import exc_info
 
 
 class Chain():
     def __init__(self, RPCUrl: str) -> None:
+        from web3 import HTTPProvider
+        from web3.middleware import geth_poa_middleware
         Net = Web3(HTTPProvider(RPCUrl))
         if Net.isConnected():
             self.Net = Net
             self.Net.middleware_onion.inject(geth_poa_middleware, layer=0)
             logger.success(f"\n[ConnectToChain]Successfully connected to [{RPCUrl}].")
             self.GetBasicInformation()
-            self.GetBlockInformation("latest")
         else:
             self.Net = None
             logger.error(f"\n[ConnectToChain]Failed to connect to [{RPCUrl}].")
@@ -27,12 +23,11 @@ class Chain():
             ChainId = self.Net.eth.chainId
             BlockNumber = self.Net.eth.block_number
             GasPrice = Web3.fromWei(self.Net.eth.gas_price, "gwei")
-            MaxPriorityFee = Web3.fromWei(self.Net.eth.max_priority_fee, "gwei")
             ClientVersion = self.Net.clientVersion
-            logger.success(f"\n[BasicInformation]\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[MaxPriorityFee]{MaxPriorityFee} Gwei\n[ClientVersion]{ClientVersion}")
-            return (ChainId, BlockNumber, GasPrice, MaxPriorityFee, ClientVersion)
+            logger.success(f"\n[BasicInformation]\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[ClientVersion]{ClientVersion}")
+            return (ChainId, BlockNumber, GasPrice, ClientVersion)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[BasicInformation]Failed to get basic information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -43,13 +38,10 @@ class Chain():
             BlockNumber = Info.number
             BlockTimeStamp = Info.timestamp
             BlockTransactionAmount = len(Info.transactions)
-            # TransactionHashs = [i.hex() for i in Data["transactions"]]
-            # ExtraData = Data.get("extraData", "None")
-            # ProofOfAuthorityData = Data.get("proofOfAuthorityData", "None")
             logger.success(f"\n[BlockInformation][{BlockID}]\n[Hash]{BlockHash}\n[Number]{BlockNumber}\n[TimeStamp]{BlockTimeStamp}\n[TransactionAmount]{BlockTransactionAmount}")
             return (BlockHash, BlockNumber, BlockTimeStamp, BlockTransactionAmount)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[BlockInformation]Failed to get block [{BlockID}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -79,7 +71,7 @@ class Chain():
                     f"\n[TransactionInformation][{TransactionHash}]\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
                 return (BlockNumber, TransactionIndex, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[TransactionInformation]Failed to get transaction [{TransactionHash}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -109,7 +101,7 @@ class Chain():
                     f"\n[TransactionInformation][{BlockID}][{TransactionIndex}]\n[BlockNumber]{BlockNumber}\n[TransactionHash]{TransactionHash}\n[TransactionType]{TransactionType}\n[From]{From}\n[To]{To}\n[InputData]{InputData}\n[Nonce]{Nonce} [Value]{Value} [Gas]{Gas}\n[MaxFeePerGas]{MaxFeePerGas} Gwei\n[MaxPriorityFeePerGas]{MaxPriorityFeePerGas} Gwei")
                 return (BlockNumber, TransactionHash, TransactionType, From, To, InputData, Nonce, Value, Gas, MaxFeePerGas, MaxPriorityFeePerGas)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[TransactionInformation]Failed to get transaction [{BlockID}][{TransactionIndex}] information.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -119,7 +111,7 @@ class Chain():
             logger.success(f"\n[GetBalance][{Address}]\n[{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]")
             return Balance
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[GetBalance]Failed to get [{Address}] balance.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -129,7 +121,7 @@ class Chain():
             logger.success(f"\n[GetCode][{Address}]\n{Code}")
             return Code
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[GetCode]Failed to get [{Address}] code.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -139,7 +131,7 @@ class Chain():
             logger.success(f"\n[GetStorage][{Address}][{Index}]\n[Hex][{Data}]<=>[Dec][{int(Data,16)}]")
             return Data
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[GetStorage]Failed to get [{Address}][{Index}] storage.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -150,7 +142,7 @@ class Chain():
             logger.info(f"\n[DumpStorage][{Address}][slot 0 ... {Count-1}]\n{Temp}")
             return Data
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[DumpStorage]Failed to dump [{Address}][0-{Count-1}] storages.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -203,7 +195,7 @@ class Account():
                 logger.error(f"\n[ConfirmTransaction][Traditional][Fail]\n[TransactionHash]{TransactionHash}")
                 return (TransactionHash, Status)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[SendTransaction][Traditional]Failed to send transaction.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -235,14 +227,13 @@ class Account():
                 logger.error(f"\n[ConfirmTransaction][EIP-1559][Fail]\n[TransactionHash]{TransactionHash}")
                 return (TransactionHash, Status)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[SendTransaction][EIP-1559]Failed to send transaction.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
         try:
             DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
-            # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
             TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
             Txn = {
                 "from": self.Address,
@@ -270,14 +261,13 @@ class Account():
                 logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
                 return None
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[DeployContract][Traditional]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def DeployContractByEIP1559(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> tuple:
         try:
             DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
-            # logger.info(f"\n[DeployContract]\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
             TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
             Txn = {
                 "from": self.Address,
@@ -306,11 +296,12 @@ class Account():
                 logger.error(f"\n[ConfirmDeploy][Fail]\n[TransactionHash]{TransactionHash}")
                 return None
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[DeployContract][EIP-1559]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
     def SignMessage(self, Message: str) -> tuple:
+        from eth_account.messages import encode_defunct
         try:
             Temp = encode_defunct(text=Message)
             SignedMessage = self.Net.eth.account.sign_message(Temp, private_key=self.PrivateKey)
@@ -323,7 +314,7 @@ class Account():
                 f"\n[SignMessage][{self.Address}]\n[Message]{Message}\n[SignedMessageHash]{SignedMessageHash}\n[SignedMessageSignature]{SignedMessageSignature}\n[SignedMessageR]{SignedMessageR}\n[SignedMessageS]{SignedMessageS}\n[SignedMessageV]{SignedMessageV}")
             return (Message, SignedMessageHash, SignedMessageSignature, SignedMessageR, SignedMessageS, SignedMessageV)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[SignMessage]Failed to sign messge [{Message}] by account [{self.Address}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -338,7 +329,7 @@ class Contract():
             self.Instance = self.Net.eth.contract(address=Address, abi=ABI)
             logger.success(f"\n[InstantiateContract]Successfully instantiated contract [{self.Address}]. ")
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[InstantiateContract]Failed to instantiated contract [{self.Address}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to instantiate contract.")
 
@@ -360,7 +351,7 @@ class Contract():
             logger.success(f"\n[CallFunction][ReadOnly][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Result]{Result}")
             return Result
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[CallFunction][ReadOnly]Failed to call readonly function [{FunctionName}{FunctionArguments}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -369,7 +360,7 @@ class Contract():
             CallData = self.Instance.encodeABI(fn_name=FunctionName, args=FunctionArguments)
             return CallData
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[EncodeABI]Failed to encode abi for [{FunctionName}{FunctionArguments}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -377,17 +368,19 @@ class Contract():
 class Utils():
     @staticmethod
     def SwitchSolidityVersion(SolidityVersion: str):
+        from solcx import install_solc, set_solc_version
         try:
-            solcx.install_solc(SolidityVersion)
-            solcx.set_solc_version(SolidityVersion)
+            install_solc(SolidityVersion)
+            set_solc_version(SolidityVersion)
             logger.success(f"\n[SwitchSolidityVersion]Current Version:{SolidityVersion}")
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[SwitchSolidityVersion]Failed to switch to version [{SolidityVersion}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to switch solidity version.")
 
     @staticmethod
     def CreateNewAccount() -> tuple:
+        from Crypto.Util.number import bytes_to_long
         Net = Web3()
         Keys = Net.eth.account.create()
         Address = Net.toChecksumAddress(Keys.address)
@@ -397,26 +390,29 @@ class Utils():
 
     @staticmethod
     def CompileSolidityToABIAndBytecode(FileCourse: str, ContractName: str, AllowPaths=None) -> tuple:
+        from solcx import compile_source
+        from json import dump
         try:
             with open(FileCourse, "r", encoding="utf-8") as sol:
                 if AllowPaths == None:
-                    CompiledSol = solcx.compile_source(sol.read())
+                    CompiledSol = compile_source(sol.read())
                 else:
-                    CompiledSol = solcx.compile_source(sol.read(), allow_paths=AllowPaths)
+                    CompiledSol = compile_source(sol.read(), allow_paths=AllowPaths)
             ContractData = CompiledSol[f'<stdin>:{ContractName}']
             ABI = ContractData['abi']
             Bytecode = ContractData['bin']
             with open(f'{ContractName}.json', 'w') as f:
-                json.dump((ABI, Bytecode), f)
+                dump((ABI, Bytecode), f)
             logger.success(f"\n[CompileContract]Success.\n[FileCourse]{FileCourse}\n[ContractName]{ContractName}\n[ABI]{ABI}\n[Bytecode]{Bytecode}")
             return (ABI, Bytecode)
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[CompileContract]Failed to compile the contract [{FileCourse}][{ContractName}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to compile the contract.")
 
     @staticmethod
     def RecoverMessage(Message: str, Signature: str) -> str:
+        from eth_account.messages import encode_defunct
         try:
             Net = Web3()
             Temp = encode_defunct(text=Message)
@@ -424,7 +420,7 @@ class Utils():
             logger.success(f"\n[RecoverMessage]\n[Message]{Message}\n[Signature]{Signature}\n[Signer]{Signer}")
             return Signer
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[RecoverMessage]Failed to recover message [{Message}] with [{Signature}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
@@ -436,15 +432,6 @@ class Utils():
             logger.success(f"\n[RecoverMessageByHash]\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[Signer]{Signer}")
             return Signer
         except Exception:
-            ExceptionInformation = sys.exc_info()
+            ExceptionInformation = exc_info()
             logger.error(f"\n[RecoverMessageByHash]Failed to recover message hash [{MessageHash}] with [{Signature}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
-
-    '''
-    Web3.keccak()
-    Web3.solidityKeccak()
-    web3.constants.ADDRESS_ZERO
-    web3.constants.HASH_ZERO
-    web3.constants.WEI_PER_ETHER
-    web3.constants.MAX_INT
-    '''
