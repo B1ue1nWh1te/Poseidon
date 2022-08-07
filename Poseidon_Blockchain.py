@@ -333,14 +333,14 @@ class Contract():
             logger.error(f"\n[InstantiateContract]Failed to instantiated contract [{self.Address}].\n[ExceptionInformation]{ExceptionInformation}")
             raise Exception("Failed to instantiate contract.")
 
-    def CallFunction(self, FunctionName: str, *FunctionArguments) -> tuple:
-        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": 0})
+    def CallFunction(self, Value: int, FunctionName: str, *FunctionArguments) -> tuple:
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": Value})
         logger.info(f"\n[CallFunction][Traditional][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
         TransactionResult = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
         return TransactionResult
 
-    def CallFunctionByEIP1559(self, FunctionName: str, *FunctionArguments) -> tuple:
-        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": 0})
+    def CallFunctionByEIP1559(self, Value: int, FunctionName: str, *FunctionArguments) -> tuple:
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": Value})
         logger.info(f"\n[CallFunction][EIP-1559][{self.Address}]\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
         TransactionResult = self.Account.SendTransactionByEIP1559(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
         return TransactionResult
