@@ -12,6 +12,7 @@
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon?include_prereleases)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue)](https://www.python.org/)
 [![CTF](https://img.shields.io/badge/CTF-purple)](<https://en.wikipedia.org/wiki/Capture_the_flag_(cybersecurity)>)
+[![Visitors](https://visitor-badge.glitch.me/badge?page_id=B1ue1nWh1te-Poseidon&left_color=gray&right_color=orange)](https://github.com/B1ue1nWh1te/Poseidon)
 
 </div>
 
