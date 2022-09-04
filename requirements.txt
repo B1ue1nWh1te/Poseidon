@@ -1,8 +1,0 @@
-web3
-gmpy2
-loguru
-Pillow
-requests
-pycrypto
-pwntools
-py-solc-x
