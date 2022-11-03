@@ -46,6 +46,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	RequestParams (可选)(dict): 指定连接时使用的 request 参数，默认为 None，例如需要使用代理进行访问，则将该变量设置为{"proxies": {"http": "http://127.0.0.1:<Port>","https": "http://127.0.0.1:<Port>"}}
 ```
 
+<br>
+
 `GetBasicInformation() -> dict`：
 
 ```
@@ -54,6 +56,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 返回值：
 	BasicInformation (dict): 链的基本信息构成的字典。{"ChainId"|"BlockNumber"|"GasPrice"|"ClientVersion"}
 ```
+
+<br>
 
 `GetBlockInformation(BlockID="latest") -> dict`：
 
@@ -67,6 +71,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	BlockInformation (dict): 区块信息构成的字典（当出现异常时返回 None ）{"BlockID"|"BlockHash"|"BlockNumber"|"BlockTimeStamp"|"BlockTransactionAmount"}
 ```
 
+<br>
+
 `GetTransactionInformationByHash(TransactionHash: str) -> dict`：
 
 ```
@@ -78,6 +84,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 返回值：
 	TransactionInformation (dict): 交易数据构成的字典（当出现异常时返回 None ）{"TransactionHash"|"TransactionType"|"BlockNumber"|"From"|"To"|("GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas"))|"GasLimit"|"Nonce"|"Value"|"InputData"}
 ```
+
+<br>
 
 `GetBalance(Address: str) -> int`：
 
@@ -91,6 +99,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
 ```
 
+<br>
+
 `GetCode(Address: str) -> str`：
 
 ```
@@ -102,6 +112,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 返回值：
 	Code (str): 合约字节码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
 ```
+
+<br>
 
 `GetStorage(Address: str, Index: int) -> str`：
 
@@ -116,6 +128,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	Data (str): 存储值（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
 ```
 
+<br>
+
 `DumpStorage(Address: str, Count: int) -> list`：
 
 ```
@@ -129,6 +143,8 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	Data (List[str]): 存储值列表（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
 ```
 
+<br>
+
 `GetPublicKeyByTransactionHash(TransactionHash: str) -> tuple`：
 
 ```
@@ -141,11 +157,15 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 	(Address, PublicKey) (tuple): 由账户地址和账户公钥组成的元组（当出现异常时返回 None ）
 ```
 
+<br>
+
 `RecoverPrivateKeyBySameRandomTransaction(TransactionOneHash: str, TransactionTwoHash: str) -> str`：
 
 ```
 利用同一个账户发送的两笔具有相同 r 值的交易，破解出该账户的私钥。（由于实现较为复杂，先填个坑，在下个版本推出）
 ```
+
+<br>
 
 ### Account 类
 
@@ -161,6 +181,8 @@ Account 对象是发起链上调用的基础。
 	PrivateKey (str): 账户私钥（十六进制形式 不含 0x 前缀）
 ```
 
+<br>
+
 `GetSelfBalance() -> int`：
 
 ```
@@ -169,6 +191,8 @@ Account 对象是发起链上调用的基础。
 返回值：
 	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
 ```
+
+<br>
 
 `Transfer(To: str, Amount: int, Data: str = "0x") -> dict`：
 
@@ -183,6 +207,8 @@ Account 对象是发起链上调用的基础。
 返回值：
 	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"}
 ```
+
+<br>
 
 `SendTransaction(To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
 
@@ -199,6 +225,8 @@ Account 对象是发起链上调用的基础。
 	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
 ```
 
+<br>
+
 `SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
 
 ```
@@ -213,6 +241,8 @@ Account 对象是发起链上调用的基础。
 返回值：
 	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
 ```
+
+<br>
 
 `DeployContract(ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict`：
 
@@ -229,6 +259,8 @@ Account 对象是发起链上调用的基础。
 	TransactionInformation (dict): 交易回执信息构成的字典（其中"Contract"为已实例化的 Contract 对象 当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"|"Contract"}
 ```
 
+<br>
+
 `SignMessage(Message: str) -> dict`：
 
 ```
@@ -240,6 +272,8 @@ Account 对象是发起链上调用的基础。
 返回值：
 	SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）{"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
 ```
+
+<br>
 
 ### Contract 类
 
@@ -256,6 +290,8 @@ Contract 对象是与指定合约进行交互的基础。
 	ABI (str): 合约 ABI
 ```
 
+<br>
+
 `CallFunction(FunctionName: str, *FunctionArguments) -> dict`：
 
 ```
@@ -268,6 +304,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
 ```
+
+<br>
 
 `CallFunctionWithValueAndGasLimit(Value: int, GasLimit: int, FunctionName: str, *FunctionArguments) -> dict`：
 
@@ -284,6 +322,8 @@ Contract 对象是与指定合约进行交互的基础。
 	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
 ```
 
+<br>
+
 `ReadOnlyCallFunction(FunctionName: str, *FunctionArguments)`：
 
 ```
@@ -296,6 +336,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Result (any): 调用函数后得到的返回值（当出现异常时返回 None ）
 ```
+
+<br>
 
 `EncodeABI(FunctionName: str, *FunctionArguments) -> str`：
 
@@ -310,6 +352,8 @@ Contract 对象是与指定合约进行交互的基础。
 	CallData (str): 调用数据编码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
 ```
 
+<br>
+
 ### BlockchainUtils 类
 
 通用工具，链下使用的功能。
@@ -322,6 +366,8 @@ Contract 对象是与指定合约进行交互的基础。
 参数：
 	SolidityVersion (str): Solidity 版本号
 ```
+
+<br>
 
 `Compile(FileCourse: str, ContractName: str, SolidityVersion: str = None, AllowPaths: str = None, Optimize: bool = False) -> tuple`：
 
@@ -339,6 +385,8 @@ Contract 对象是与指定合约进行交互的基础。
 	(ABI, Bytecode) (tuple): 由 ABI 和 Bytecode 组成的元组
 ```
 
+<br>
+
 `CreateNewAccount() -> tuple`：
 
 ```
@@ -347,6 +395,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组
 ```
+
+<br>
 
 `MnemonicToAddressAndPrivateKey(Mnemonic: str) -> tuple`：
 
@@ -359,6 +409,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组（当出现异常时返回 None ）
 ```
+
+<br>
 
 `RecoverMessage(Message: str, Signature: str) -> str`：
 
@@ -373,6 +425,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
 ```
 
+<br>
+
 `RecoverMessageByHash(MessageHash: str, Signature: str) -> str`：
 
 ```
@@ -386,6 +440,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
 ```
 
+<br>
+
 `RecoverRawTransaction(RawTransactionData: str) -> str`：
 
 ```
@@ -397,6 +453,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Address (str): 账户地址（当出现异常时返回 None ）
 ```
+
+<br>
 
 `CrackSelector(TargetFunctionName: str, TargetFunctionParameters: list, GenerateFunctionParameters: list) -> str`：
 
@@ -412,6 +470,8 @@ Contract 对象是与指定合约进行交互的基础。
 	GenerateFunction (str): 爆破出的函数的完整表示（当出现异常时返回 None ）
 ```
 
+<br>
+
 `AssemblyToBytecode(Assembly: str) -> str`：
 
 ```
@@ -424,6 +484,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Bytecode (str): EVM Bytecode （十六进制形式 含 0x 前缀 当出现异常时返回 None ）
 ```
 
+<br>
+
 `BytecodeToAssembly(Bytecode: str) -> str`：
 
 ```
@@ -435,6 +497,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Assembly (str): EVM Assembly （当出现异常时返回 None ）
 ```
+
+<br>
 
 ## Cryptography 模块
 
@@ -456,6 +520,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Base64 编码后的字符串
 ```
 
+<br>
+
 `Base64_Decrypt(Text: str) -> str`：
 
 ```
@@ -467,6 +533,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): Base64 解码后的字符串
 ```
+
+<br>
 
 `Base32_Encrypt(Text: str) -> str`：
 
@@ -480,6 +548,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Base32 编码后的字符串
 ```
 
+<br>
+
 `Base32_Decrypt(Text: str) -> str`：
 
 ```
@@ -491,6 +561,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): Base32 解码后的字符串
 ```
+
+<br>
 
 `Base16_Encrypt(Text: str) -> str`：
 
@@ -504,6 +576,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Base16 编码后的字符串
 ```
 
+<br>
+
 `Base16_Decrypt(Text: str) -> str`：
 
 ```
@@ -515,6 +589,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): Base16 解码后的字符串
 ```
+
+<br>
 
 `AES_Padding(Text: str, BlockSize: int = 16) -> bytes`：
 
@@ -528,6 +604,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Fill (bytes): padding 后的字节数据
 ```
+
+<br>
 
 `AES_Encrypt(Text: str, Key: str, BlockSize: int = 16) -> str`：
 
@@ -543,6 +621,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): AES 加密后的密文（Base64 编码形式）
 ```
 
+<br>
+
 `AES_Decrypt(Text: str, Key: str, BlockSize: int = 16) -> str`：
 
 ```
@@ -556,6 +636,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): AES 解密后得到的原文
 ```
+
+<br>
 
 `RSA_Encrypt(Text: str, p: int, q: int, e: int) -> str`：
 
@@ -572,6 +654,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): RSA 加密后的密文（ Base64 编码形式）
 ```
 
+<br>
+
 `RSA_Base64_Decrypt(Base64Text: str, p: int, q: int, e: int) -> str`：
 
 ```
@@ -586,6 +670,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): RSA 解密后得到的原文
 ```
+
+<br>
 
 `RSA_Long_Decrypt(Long: int, p: int, q: int, e: int) -> str`：
 
@@ -602,6 +688,8 @@ Contract 对象是与指定合约进行交互的基础。
 	DecryptedText (str): RSA 解密后得到的原文
 ```
 
+<br>
+
 `RSA_Wiener_Attack(c: int, e: int, n: int) -> str`：
 
 ```
@@ -615,6 +703,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	m (str): RSA 维纳攻击后得到的原文
 ```
+
+<br>
 
 `RSA_MultiPrime_Attack(c: int, e: int, n: int, primes: list, powers: list = None) -> str`：
 
@@ -632,6 +722,8 @@ Contract 对象是与指定合约进行交互的基础。
 	m (str): RSA 多素数攻击后得到的原文
 ```
 
+<br>
+
 `RSA_LowEncryptionIndex_Attack(c: int, e: int, n: int) -> str`：
 
 ```
@@ -645,6 +737,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	m (str): RSA 低加密指数攻击后得到的原文
 ```
+
+<br>
 
 `RSA_CommonMod_Attack(c1: int, c2: int, e1: int, e2: int, n: int) -> str`：
 
@@ -662,6 +756,8 @@ Contract 对象是与指定合约进行交互的基础。
 	m (str): RSA 共模攻击后得到的原文
 ```
 
+<br>
+
 `RSA_Broadcast_Attack(cs: list, e: int, ns: list) -> str`：
 
 ```
@@ -676,6 +772,8 @@ Contract 对象是与指定合约进行交互的基础。
 	m (str): RSA 广播攻击后得到的原文
 ```
 
+<br>
+
 `RC4_Encrypt(Text: str, Key: str) -> str`：
 
 ```
@@ -689,6 +787,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): RC4 加密后得到的密文（ Base64 编码形式）
 ```
 
+<br>
+
 `RC4_Decrypt(Text: str, Key: str) -> str`：
 
 ```
@@ -701,6 +801,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): RC4 解密后得到的原文
 ```
+
+<br>
 
 ### ClassicalCryptoUtils 类
 
@@ -719,6 +821,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Caesar 加密后得到的密文
 ```
 
+<br>
+
 `Caesar_Decrypt(Text: str, Move: int = 3) -> str`：
 
 ```
@@ -732,6 +836,8 @@ Contract 对象是与指定合约进行交互的基础。
 	DecryptedText (str): Caesar 解密后得到的原文
 ```
 
+<br>
+
 `Caesar_Attack(Text: str) -> list`：
 
 ```
@@ -743,6 +849,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Result (List[str]): Caesar 爆破攻击后得到的字符串列表
 ```
+
+<br>
 
 `Morse_Encrypt(Text: str) -> str`：
 
@@ -756,6 +864,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Morse 加密后得到的密文（未找到映射关系的字符将保持不变）
 ```
 
+<br>
+
 `Morse_Decrypt(Text: str) -> str`：
 
 ```
@@ -767,6 +877,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): Morse 解密后得到的原文（未找到映射关系的字符将保持不变）
 ```
+
+<br>
 
 `Bacon_Encrypt(Text: str) -> str`：
 
@@ -780,6 +892,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Bacon 加密后得到的密文（大写形式 未找到映射关系的字符将以[]包裹）
 ```
 
+<br>
+
 `Bacon_Decrypt(Text: str) -> str`：
 
 ```
@@ -791,6 +905,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	DecryptedText (str): Bacon 解密后得到的原文（大写形式 未找到映射关系的字符将以[]包裹）
 ```
+
+<br>
 
 `Fence_Encrypt(Text: str, Fence: int) -> str`：
 
@@ -805,6 +921,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): Fence 加密后得到的密文
 ```
 
+<br>
+
 `Fence_Decrypt(Text: str, Fence: int) -> str`：
 
 ```
@@ -818,6 +936,8 @@ Contract 对象是与指定合约进行交互的基础。
 	DecryptedText (str): Fence 解密后得到的原文
 ```
 
+<br>
+
 `Fence_Attack(Text: str) -> list`：
 
 ```
@@ -829,6 +949,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Result (List[tuple]): Fence 爆破攻击后得到的元组列表（字符串, 栏数）
 ```
+
+<br>
 
 `WFence_Encrypt(Text: str, Fence: int) -> str`：
 
@@ -843,6 +965,8 @@ Contract 对象是与指定合约进行交互的基础。
 	EncryptedText (str): WFence 加密后得到的密文
 ```
 
+<br>
+
 `WFence_Decrypt(Text: str, Fence: int) -> str`：
 
 ```
@@ -856,6 +980,8 @@ Contract 对象是与指定合约进行交互的基础。
 	DecryptedText (str): WFence 解密后得到的原文
 ```
 
+<br>
+
 `WFence_Attack(Text: str) -> list`：
 
 ```
@@ -867,6 +993,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Result (List[tuple]): WFence 爆破攻击后得到的元组列表（字符串, 栏数）
 ```
+
+<br>
 
 ### MiscUtils 类
 
@@ -884,6 +1012,8 @@ Contract 对象是与指定合约进行交互的基础。
 	String (str): 转换得到的字符串
 ```
 
+<br>
+
 `Binary_Dec(Binary: str) -> int`：
 
 ```
@@ -895,6 +1025,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Dec (int): 转换得到的十进制整数
 ```
+
+<br>
 
 `Binary_Hex(Binary: str) -> str`：
 
@@ -908,6 +1040,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Hex (str): 转换得到的十六进制字符串
 ```
 
+<br>
+
 `Dec_String(Dec: int) -> str`：
 
 ```
@@ -919,6 +1053,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	String (str): 转换得到的字符串
 ```
+
+<br>
 
 `Dec_Binary(Dec: int) -> str`：
 
@@ -932,6 +1068,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Binary (str): 转换得到的二进制字符串
 ```
 
+<br>
+
 `Dec_Hex(Dec: int) -> str`：
 
 ```
@@ -943,6 +1081,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Hex (str): 转换得到的十六进制字符串
 ```
+
+<br>
 
 `Hex_String(Hex: str) -> str`：
 
@@ -956,6 +1096,8 @@ Contract 对象是与指定合约进行交互的基础。
 	String (str): 转换得到的字符串
 ```
 
+<br>
+
 `Hex_Binary(Hex: str) -> str`：
 
 ```
@@ -967,6 +1109,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Binary (str): 转换得到的二进制字符串
 ```
+
+<br>
 
 `Hex_Dec(Hex: str) -> int`：
 
@@ -980,6 +1124,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Dec (int): 转换得到的十进制整数
 ```
 
+<br>
+
 `SHA1(Text: str) -> str`：
 
 ```
@@ -991,6 +1137,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Hash (str): 该字符串的 SHA1 哈希值（十六进制字符串，不含 0x 前缀）
 ```
+
+<br>
 
 `SHA256(Text: str) -> str`：
 
@@ -1004,6 +1152,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Hash (str): 该字符串的 SHA256 哈希值（十六进制字符串，不含 0x 前缀）
 ```
 
+<br>
+
 `SHA512(Text: str) -> str`：
 
 ```
@@ -1016,6 +1166,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Hash (str): 该字符串的 SHA512 哈希值（十六进制字符串，不含 0x 前缀）
 ```
 
+<br>
+
 `MD5(Text: str) -> str`：
 
 ```
@@ -1027,6 +1179,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Hash (str): 该字符串的 MD5 哈希值（十六进制字符串，不含 0x 前缀）
 ```
+
+<br>
 
 ## PoW 模块
 
@@ -1051,6 +1205,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
 
+<br>
+
 `ProofOfWork_SHA256_Prefix(Url: str, Port: int, PrefixBegin: str, PrefixEnd: str, PrefixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
 
 ```
@@ -1068,6 +1224,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
+
+<br>
 
 `ProofOfWork_SHA256_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote`：
 
@@ -1087,6 +1245,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
 
+<br>
+
 `ProofOfWork_MD5_Full(Url: str, Port: int, HashBegin: str, HashEnd: str, TextLength: int, SendAfter: str) -> remote`：
 
 ```
@@ -1103,6 +1263,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
+
+<br>
 
 `ProofOfWork_MD5_Prefix(Url: str, Port: int, PrefixBegin: str, PrefixEnd: str, PrefixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
 
@@ -1122,6 +1284,8 @@ Contract 对象是与指定合约进行交互的基础。
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
 
+<br>
+
 `ProofOfWork_MD5_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote`：
 
 ```
@@ -1139,6 +1303,8 @@ Contract 对象是与指定合约进行交互的基础。
 返回值：
 	Connection (pwn.remote): 与服务器建立的连接对象
 ```
+
+<br>
 
 # 开源许可
 
