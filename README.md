@@ -4,7 +4,7 @@
 
 ![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?description=1&font=Rokkitt&forks=1&issues=1&language=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Dark)
 
-海神波塞冬 Poseidon，CTF 解题快速利用工具，是攻克 Blockchain 方向的得力助手，也包含一些 Crypto 和 Misc 方向的小功能，可用于快速编写解题脚本而无需繁琐的步骤。
+海神波塞冬 Poseidon， CTF 解题快速利用工具，是攻克 Blockchain 方向的得力助手，也包含一些 Crypto 方向的功能，可用于快速编写解题脚本而免去以往繁琐的步骤。
 
 [![Lisence](https://img.shields.io/github/license/B1ue1nWh1te/Poseidon)](https://github.com/B1ue1nWh1te/Poseidon/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon?include_prereleases)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
@@ -16,295 +16,1129 @@
 
 # 注意事项
 
-本工具仅可用于 CTF 比赛解题，请勿作其他用途。
+本工具仅可用于 CTF 比赛解题，请勿作其他用途，同时在任何情况下都应该使用新生成的账户而不是常用的具有实际价值的账户。
 
 # 安装
 
 ```bash
-pip install poseidon-python
+pip install -U poseidon-python
 ```
 
 # 现有功能
 
 ## Blockchain 模块
 
-一般情况下，需要先创建`Chain`实例，再创建`Account`实例，之后就可以使用该账户发送交易到指定链上了，如果需要用到合约，还需要创建`Contract`实例，才可对合约函数进行调用。
+本模块用于与 EVM 区块链网络进行交互，可满足大多数情况的需求。基于[Web3.py](https://github.com/ethereum/web3.py)实现。
 
-例如[Ethernaut-Coin Flip](https://ethernaut.openzeppelin.com/level/0x4dF32584890A0026e56f7535d0f2C6486753624f)的[解题脚本](https://www.seaeye.cn/archives/468.html)：
+一般情况下，需要先创建`Chain`实例，再创建`Account`实例，之后就可以使用该账户发送交易到指定链上了，如果需要用到合约，还需要创建`Contract`实例，才可对合约函数进行调用。需要用到一些链下功能可以使用`BlockchainUtils`。
 
-```python
-from Poseidon.Blockchain import *
-from loguru import logger
-import time
+### Chain 类
 
-# 日志
-logger.add('CoinFlip_{time}.log')
+Chain 对象是进行链上交互的基础。
 
-# 配置Solidity版本
-BlockchainUtils.SwitchSolidityVersion("0.8.0")
+`Chain(RPCUrl: str, RequestParams: dict = None)`：
 
-# 连接至链
-chain = Chain("https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161")
+```
+Chain 对象初始化函数。（当连接失败时会抛出异常）
 
-# 使用私钥导入账户
-account = Account(chain, "<Your Private Key>")
-
-# 题目合约地址规范化
-exerciseContractAddress = Web3.toChecksumAddress("<Exercise Contract Address>")
-
-# 编译题目合约
-abi, bytecode = BlockchainUtils.Compile("CoinFlip.sol", "CoinFlip")
-
-# 实例化题目合约
-exerciseContract = Contract(account, exerciseContractAddress, abi)
-
-# 编译攻击合约
-abi, bytecode = BlockchainUtils.Compile("Hacker.sol", "Hacker")
-
-# 部署攻击合约
-data = account.DeployContract(abi, bytecode)
-hackerAddress, hacker = data["ContractAddress"], data["Contract"]
-
-# 调用十次攻击合约
-i = 0
-while i < 10:
-    try:
-        temp = hacker.CallFunction(0,"hack", exerciseContractAddress)
-        if temp[1] != 0:
-            i += 1
-    except:
-        print("[Error]Waiting for next block.")
-        time.sleep(5)
-
-# 获取题目解出状态
-exerciseContract.ReadOnlyCallFunction("consecutiveWins")
-
-logger.success("Execution completed.")
+参数：
+	RPCUrl (str): 要连接的链的 RPC 链接地址
+	RequestParams (可选)(dict): 指定连接时使用的 request 参数，默认为 None，例如需要使用代理进行访问，则将该变量设置为{"proxies": {"http": "http://127.0.0.1:<Port>","https": "http://127.0.0.1:<Port>"}}
 ```
 
-### Chain
+`GetBasicInformation() -> dict`：
 
-`__init__(self, RPCUrl: str, RequestParams: dict = None)`: 初始化链
+```
+获取链的基本信息。包括链 ID 、区块高度、当前 GasPrice(Gwei) 、所连接的 RPC 的 geth 等客户端软件的版本号。
 
-`GetBasicInformation(self) -> dict`: 获取链基本信息
+返回值：
+	BasicInformation (dict): 链的基本信息构成的字典。{"ChainId"|"BlockNumber"|"GasPrice"|"ClientVersion"}
+```
 
-`GetBlockInformation(self, BlockID="latest") -> dict`: 根据块 ID 获取指定块的信息
+`GetBlockInformation(BlockID="latest") -> dict`：
 
-`GetTransactionByHash(self, TransactionHash: str) -> dict`: 根据哈希获取指定交易的信息
+```
+根据 BlockID 获取区块信息。包括区块哈希、区块号、区块时间戳、区块内交易总数。
 
-`GetTransactionByBlockIdAndIndex(self, BlockID, TransactionIndex: int) -> dict`: 根据交易所在块的 ID 与交易在该块中的索引获取指定交易的信息
+参数：
+	BlockID (str|int): 区块 ID ，可以为字符串如'latest'|'earliest'，也可以为整数即要获取信息的区块的高度
 
-`GetBalance(self, Address: str) -> int`: 获取指定地址的链原生代币余额
+返回值：
+	BlockInformation (dict): 区块信息构成的字典（当出现异常时返回 None ）{"BlockID"|"BlockHash"|"BlockNumber"|"BlockTimeStamp"|"BlockTransactionAmount"}
+```
 
-`GetCode(self, Address: str) -> str`: 获取指定地址的 Code
+`GetTransactionInformationByHash(TransactionHash: str) -> dict`：
 
-`GetStorage(self, Address: str, Index: int) -> str`: 根据索引获取指定地址的存储
+```
+根据交易哈希获取交易数据。包括交易类型（Traditional|EIP-1559）、交易所在区块号、发送者、接收者、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas)(Gwei))、GasLimit、Nonce、Value、InputData。
 
-`DumpStorage(self, Address: str, Count: int) -> list`: 从 0 开始依次读出指定地址的 Count 个存储槽数据
+参数：
+	TransactionHash (str): 要查询的交易的哈希
 
-### Account
+返回值：
+	TransactionInformation (dict): 交易数据构成的字典（当出现异常时返回 None ）{"TransactionHash"|"TransactionType"|"BlockNumber"|"From"|"To"|("GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas"))|"GasLimit"|"Nonce"|"Value"|"InputData"}
+```
 
-`__init__(self, Chain: Chain, PrivateKey: str)`：初始化账户
+`GetBalance(Address: str) -> int`：
 
-`GetSelfBalance(self) -> int`: 获取账户自身的链原生代币余额
+```
+根据账户地址获取其主币余额。
 
-`SendTransaction(self, To: str, Data: str, Value: int = 0, Gas: int = 10000000) -> dict`: 发送交易
+参数：
+	Address (str): 账户地址
 
-`SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, Gas: int = 1000000) -> dict`: 以 EIP-1559 形式发送交易
+返回值：
+	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
+```
 
-`DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict`: 部署合约
+`GetCode(Address: str) -> str`：
 
-`DeployContractByEIP1559(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict`: 以 EIP-1559 形式部署合约
+```
+根据合约地址获取其字节码。
 
-`SignMessage(self, Message: str) -> dict`: 对消息进行签名
+参数：
+	Address (str): 合约地址
 
-### Contract
+返回值：
+	Code (str): 合约字节码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+```
 
-`__init__(self, Account: Account, Address: str, ABI: dict)`: 初始化合约
+`GetStorage(Address: str, Index: int) -> str`：
 
-`CallFunction(self, Value: int, FunctionName: str, *FunctionArguments) -> dict`: 调用合约函数
+```
+根据合约地址和存储插槽索引获取存储值。
 
-`CallFunctionByEIP1559(self, Value: int, FunctionName: str, *FunctionArguments) -> dict`: 以 EIP-1559 形式调用合约函数
+参数：
+	Address (str): 合约地址
+	Index (int): 存储插槽索引
 
-`ReadOnlyCallFunction(self, FunctionName: str, *FunctionArguments)`: 调用合约的只读函数
+返回值：
+	Data (str): 存储值（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+```
 
-`EncodeABI(self, FunctionName: str, *FunctionArguments) -> str`: 编码调用 ABI
+`DumpStorage(Address: str, Count: int) -> list`：
 
-### BlockchainUtils
+```
+根据合约地址和数量批量遍历存储插槽并获取值（从插槽 0 开始）。
 
-`SwitchSolidityVersion(SolidityVersion: str)`: 指定 Solidity 版本
+参数：
+	Address (str): 合约地址
+	Count (int): 要获取的数量
 
-`Compile(FileCourse: str, ContractName: str, AllowPaths: str = None) -> tuple`: 编译合约
+返回值：
+	Data (List[str]): 存储值列表（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+```
 
-`CreateNewAccount() -> tuple`: 创建新账户
+`GetPublicKeyByTransactionHash(TransactionHash: str) -> tuple`：
 
-`RecoverMessage(Message: str, Signature: str) -> str`: 复原被签名的消息
+```
+通过一笔已在链上确认的交易的哈希，获取账户的公钥。
 
-`RecoverMessageByHash(MessageHash: str, Signature: str) -> str`: 根据哈希复原被签名的消息
+参数：
+	TransactionHash (str): 交易哈希
+
+返回值：
+	(Address, PublicKey) (tuple): 由账户地址和账户公钥组成的元组（当出现异常时返回 None ）
+```
+
+`RecoverPrivateKeyBySameRandomTransaction(TransactionOneHash: str, TransactionTwoHash: str) -> str`：
+
+```
+利用同一个账户发送的两笔具有相同 r 值的交易，破解出该账户的私钥。（由于实现较为复杂，先填个坑，在下个版本推出）
+```
+
+### Account 类
+
+Account 对象是发起链上调用的基础。
+
+`Account(Chain: Chain, PrivateKey: str)`：
+
+```
+通过私钥导入账户并与 Chain 对象绑定，后续的所有链上调用都会发送至 Chain 所表示的链上。（当导入失败时将会抛出异常）
+
+参数：
+	Chain (Poseidon.Blockchain.Chain): 链对象
+	PrivateKey (str): 账户私钥（十六进制形式 不含 0x 前缀）
+```
+
+`GetSelfBalance() -> int`：
+
+```
+获取自身账户的主币余额。
+
+返回值：
+	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
+```
+
+`Transfer(To: str, Amount: int, Data: str = "0x") -> dict`：
+
+```
+向指定账户转账指定数量的主币，可附带信息。（若 90 秒内交易未确认则作超时处理）
+
+参数：
+	To (str): 接收方地址
+	Amount (int): 发送的主币数量（单位为 ether ）
+	Data (可选)(str): 交易数据（十六进制形式 含 0x 前缀），默认值为 "0x"
+
+返回值：
+	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"}
+```
+
+`SendTransaction(To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
+
+```
+发送一笔自定义交易（传统方式）。（若 90 秒内交易未确认则作超时处理）
+
+参数：
+	To (str): 交易接收方地址
+	Data (str): 交易数据（十六进制形式 含 0x 前缀）
+	Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
+	GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
+
+返回值：
+	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+```
+
+`SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
+
+```
+发送一笔自定义交易（EIP-1559方式）。（若 90 秒内交易未确认则作超时处理）
+
+参数：
+	To (str): 交易接收方地址
+	Data (str): 交易数据（十六进制形式 含 0x 前缀）
+	Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
+	GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
+
+返回值：
+	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+```
+
+`DeployContract(ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict`：
+
+```
+部署合约（若 90 秒内交易未确认则作超时处理）。
+
+参数：
+	ABI (dict): 合约 ABI
+	Bytecode (str): 合约字节码（十六进制形式 含 0x 前缀）
+	Value (可选)(int): 随交易发送给合约的主币数量（单位为 wei ），默认为 0 wei
+	*Arguments (可选)(any): 传给合约构造函数的参数，默认为空
+
+返回值：
+	TransactionInformation (dict): 交易回执信息构成的字典（其中"Contract"为已实例化的 Contract 对象 当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"|"Contract"}
+```
+
+`SignMessage(Message: str) -> dict`：
+
+```
+以 EIP-191 标准对消息进行签名。
+
+参数：
+	Message (str): 待签名消息
+
+返回值：
+	SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）{"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
+```
+
+### Contract 类
+
+Contract 对象是与指定合约进行交互的基础。
+
+`Contract(Account: Account, Address: str, ABI: dict)`：
+
+```
+通过合约地址与 ABI 实例化合约对象，并与 Account 对象绑定，后续的所有对该合约的调用都会由这一账户发起。（当实例化失败时会抛出异常）
+
+参数：
+	Account (Poseidon.Blockchain.Account): 账户对象
+	Address (str): 合约地址
+	ABI (str): 合约 ABI
+```
+
+`CallFunction(FunctionName: str, *FunctionArguments) -> dict`：
+
+```
+通过传入函数名及参数来调用该合约内的函数。
+
+参数：
+	FunctionName (str): 函数名称
+	*FunctionArguments (可选)(any): 函数参数，默认为空
+
+返回值：
+	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+```
+
+`CallFunctionWithValueAndGasLimit(Value: int, GasLimit: int, FunctionName: str, *FunctionArguments) -> dict`：
+
+```
+通过传入函数名及参数来调用该合约内的函数（支持自定义 Value 和 GasLimit）。
+
+参数：
+	Value (int): 随交易发送的主币数量（单位为 wei ）
+	GasLimit (int): 该交易最多可消耗的 Gas 量（单位为 wei ）
+	FunctionName (str): 函数名称
+	*FunctionArguments (可选)(any): 函数参数，默认为空
+
+返回值：
+	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+```
+
+`ReadOnlyCallFunction(FunctionName: str, *FunctionArguments)`：
+
+```
+通过传入函数名及参数来调用该合约内的只读函数。
+
+参数：
+	FunctionName (str): 函数名称
+	*FunctionArguments (可选)(any): 函数参数，默认为空
+
+返回值：
+	Result (any): 调用函数后得到的返回值（当出现异常时返回 None ）
+```
+
+`EncodeABI(FunctionName: str, *FunctionArguments) -> str`：
+
+```
+通过传入函数名及参数进行编码，相当于生成调用该函数的 CallData 。
+
+参数：
+	FunctionName (str): 函数名称
+	*FunctionArguments (可选)(any): 函数参数，默认为空
+
+返回值：
+	CallData (str): 调用数据编码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+```
+
+### BlockchainUtils 类
+
+通用工具，链下使用的功能。
+
+`SwitchSolidityVersion(SolidityVersion: str)`：
+
+```
+设置当前使用的 Solidity 版本，若该版本文件未安装则会自动安装。（当设置版本失败时会抛出异常）
+
+参数：
+	SolidityVersion (str): Solidity 版本号
+```
+
+`Compile(FileCourse: str, ContractName: str, SolidityVersion: str = None, AllowPaths: str = None, Optimize: bool = False) -> tuple`：
+
+```
+根据给定的参数使用 py-solc-x 编译合约。（当编译失败时会抛出异常）
+
+参数：
+	FileCourse (str): 合约文件完整路径（当合约文件与脚本文件在同一目录下时可直接使用文件名）
+	ContractName (str): 要编译的合约名称
+	SolidityVersion (可选)(str): 指定使用的 Solidity 版本（若不指定则会使用当前已激活的 Solidity 版本进行编译），默认为 None
+	AllowPaths (可选)(str): 指定路径白名单（在编译时可能会出现 AllowPaths 相关错误，可在这里解决），默认为 None
+	Optimize (可选)(str): 是否开启优化器，False 为关闭，True 为开启，默认为 False
+
+返回值：
+	(ABI, Bytecode) (tuple): 由 ABI 和 Bytecode 组成的元组
+```
+
+`CreateNewAccount() -> tuple`：
+
+```
+创建新账户。
+
+返回值：
+	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组
+```
+
+`MnemonicToAddressAndPrivateKey(Mnemonic: str) -> tuple`：
+
+```
+将助记词转换为账户地址与私钥（参考 BIP-32 标准）。
+
+参数：
+	Mnemonic (str): 助记词以空格进行分隔而组成的字符串（参考 BIP-39 标准）
+
+返回值：
+	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组（当出现异常时返回 None ）
+```
+
+`RecoverMessage(Message: str, Signature: str) -> str`：
+
+```
+通过消息原文和签名还原出签署者的账户地址。
+
+参数：
+	Message (str): 消息原文
+	Signature (str): 签名
+
+返回值：
+	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
+```
+
+`RecoverMessageByHash(MessageHash: str, Signature: str) -> str`：
+
+```
+通过消息哈希和签名还原出签署者的账户地址。
+
+参数：
+	MessageHash (str): 消息哈希
+	Signature (str): 签名
+
+返回值：
+	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
+```
+
+`RecoverRawTransaction(RawTransactionData: str) -> str`：
+
+```
+用于获取签署此交易的账户的地址。
+
+参数：
+	RawTransactionData (str): 原生交易数据（十六进制形式 含 0x 前缀）
+
+返回值：
+	Address (str): 账户地址（当出现异常时返回 None ）
+```
+
+`CrackSelector(TargetFunctionName: str, TargetFunctionParameters: list, GenerateFunctionParameters: list) -> str`：
+
+```
+根据目标函数名与参数以及要生成的函数的参数，爆破出一个函数名，以使得这两个函数的 Selector 相等。（理论上可解，但是 Python 实在是太慢了，留个坑以后看看是否能提速）
+
+参数：
+	TargetFunctionName (str): 目标函数名
+	TargetFunctionParameters (List[str]): 目标函数参数列表
+	GenerateFunctionParameters (List[str]): 要生成的函数的参数列表
+
+返回值：
+	GenerateFunction (str): 爆破出的函数的完整表示（当出现异常时返回 None ）
+```
+
+`AssemblyToBytecode(Assembly: str) -> str`：
+
+```
+将 EVM Assembly 转为 EVM Bytecode 。
+
+参数：
+	Assembly (str): EVM Assembly 字符串
+
+返回值：
+	Bytecode (str): EVM Bytecode （十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+```
+
+`BytecodeToAssembly(Bytecode: str) -> str`：
+
+```
+将 EVM Bytecode 转为 EVM Assembly 。
+
+参数：
+	Bytecode (str): EVM Bytecode 字符串（十六进制形式 含 0x 前缀）
+
+返回值：
+	Assembly (str): EVM Assembly （当出现异常时返回 None ）
+```
 
 ## Cryptography 模块
 
-例如 RSA 密码的维纳攻击：
+本模块用于解决常见的密码学问题。
 
-```python
-from Poseidon.Cryptography import *
+### ModernCryptoUtils 类
 
-c=95267370256066769838337747074613384873130229960498483863532367776035032572852929192615316576459694331250252556497631694740022138111036400986764177734369838342591998927562945381419058366186792509393106287586887362087306654669323671777947824036291661918607426035181203851539103325998426459243898101029020295691838189129620371008325930013559810102919311870290134826512484097220197539230546164153197998791243720942561991399617076030993626951506104013918049711672627654688980120970533645733673090635057413871984027810703923369437250893348483086782212034342653051281902817392018001479258420669264415501475932933992850728706672929405313600749215985411632608095628677993813597979403642429941499746829792989542997812081764690610483215261053538372608164787573234782242231516605578411379752580289336917041163266741855032601096072967110532711990529880332617370524270464075773759819395063442942936380266233365841095277630192476402511722171921606815101725111071300857694482840853229685558425271848066927242827086521317380782171238880746369706438528481816398259903146586949100039175077183726950898184647643394954945610710152392201403059197872874917090778829365677505140875737144660497677868022940399693688784730715842812161819984500346848776216553
-e=173279456743230080621017365782109382300464407222659715088896977256836281616268680945198842762589774463979475671411325549491119275843634476767434141162251440128267743628520687819778054081862669392022638561711243048686177024706794109732879008036054980520978026668448968472856614200050693198639764864102357612979283854505926693806667493401447849840959699906591346529086698704432539620975330467442772776717445252023030122718721643653304047196807293575880524103499301481658959884059857143042853270421653019072455543805443412672623573727047140020884143266326560866330729394363196503593380265047467096543598311441458530310679485721108818417037058590314288658010217988281010512823896799300839815159157461324129606735170857765562003742951529657870330430909029521121213811802047749272088028568546720500024446323242611654413563293934152586519996153254714554351058322610356108612279003362680490053142204471044921591273897722773149804320291989000233468903056147470874130344913224325418672879543105264594005427832924916194805177326950999764303377811639278163209680026574862045662012789632391097789691415069932107136619935252148482058632893898927949072268406881309426626792830044382260515591176693471696319954446030667166309913114122104514824977979
-n=470644710803932932512978827923303177251118147254197669197880877933691333373985617541803529915823866778893951837205409386851882681891901968039669086359788209984380028571953695488594409481787886910251596530765294590299041804794064683930600833830314491883013079189678180741236571163429381063099014246011795027346952166636867433910238423840581018902725192909630974449833401049616775405505215676016785334488391487465594571285890541811935855077283960590595117406699633923563526092192621628384206760218861223827563700801244930662858751794860059761679913658718964802644824629046733812979885743418624227999490303158082154081306362983892991361638394422732061859098104545472186525114696124448200241859164591512578048979001771751983587722958729782617339007332560114087497582935926352896360634917079289956976854666712751933808837805975693683147231224198994010014584453287020306301646174206473218894297633751493304464876906150106514614910587021672849754663941168328636325762572621857629768876059149757228346459502909392992682012429036971329109770800704396127807790510024881922916421853812648659345484677108899082003317583049300042120635991950435890529487703525501610733618101722310430775843942147829772926122874312839148564489983715775087153849089
+本模块用于解决现代密码学问题。
 
-print(ModernCryptoUtils.RSA_Wiener_Attack(c,e,n))
+`Base64_Encrypt(Text: str) -> str`：
+
+```
+用于对字符串进行 Base64 编码。
+
+参数：
+	Text (str): 待编码的字符串
+
+返回值：
+	EncryptedText (str): Base64 编码后的字符串
 ```
 
-运行结果：
+`Base64_Decrypt(Text: str) -> str`：
 
-```log
-flag{Hello_World!-Respect_Poseidon's_Authority!}
+```
+用于对 Base64 编码的字符串进行解码。
+
+参数：
+	Text (str): 待解码的 Base64 编码字符串
+
+返回值：
+	DecryptedText (str): Base64 解码后的字符串
 ```
 
-### ModernCryptoUtils
+`Base32_Encrypt(Text: str) -> str`：
 
-`Base64_Encrypt(Text: str) -> str`: Base64 编码
+```
+用于对字符串进行 Base32 编码。
 
-`Base64_Decrypt(Text: str) -> str`: Base64 解码
+参数：
+	Text (str): 待编码的字符串
 
-`Base64_Stego_Decrypt(Base64List: list) -> str`: Base64 隐写破解
-
-`Base32_Encrypt(Text: str) -> str`: Base32 编码
-
-`Base32_Decrypt(Text: str) -> str`: Base32 解码
-
-`Base16_Encrypt(Text: str) -> str`: Base16 编码
-
-`Base16_Decrypt(Text: str) -> str`: Base16 解码
-
-`AES_Encrypt(Text: str, Key: str, Mode=aes.MODE_ECB) -> str`: AES 加密
-
-`AES_Decrypt(Text: str, Key: str, Mode=aes.MODE_ECB) -> str`: AES 解密
-
-`RSA_Encrypt(Text: str, p: int, q: int, e: int) -> str`: RSA 加密
-
-`RSA_Base64_Decrypt(Base64: str, p: int, q: int, e: int) -> str`: Base64 形式的 RSA 解密
-
-`RSA_Long_Decrypt(Long: int, p: int, q: int, e: int) -> str`: 长整型形式的 RSA 解密
-
-`RSA_Wiener_Attack(c: int, e: int, n: int) -> str`: RSA 维纳攻击
-
-`RSA_MultiPrime_Attack(c: int, e: int, n: int, primes: list, powers: list = None) -> str`: RSA 多素数攻击
-
-`RSA_LowEncryptionIndex_Attack(c: int, e: int, n: int) -> str`: RSA 低加密指数攻击
-
-`RSA_CommonMod_Attack(c1: int, c2: int, e1: int, e2: int, n: int) -> str`: RSA 共模攻击
-
-`RSA_Broadcast_Attack(cs: list, e: int, ns: list) -> str`: RSA 广播攻击
-
-`RC4_Encrypt(Text: str, Key: str) -> str`: RC4 加密
-
-`RC4_Decrypt(Text: str, Key: str) -> str`: RC4 解密
-
-### ClassicalCryptoUtils
-
-`Caesar_Encrypt(Text: str, Move: int = 3) -> str`: 恺撒加密
-
-`Caesar_Decrypt(Text: str, Move: int = 3) -> str`: 恺撒解密
-
-`Caesar_Attack(Text: str) -> list`: 恺撒攻击
-
-`Morse_Encrypt(Morse: str) -> str`: 摩斯加密
-
-`Morse_Decrypt(Morse: str) -> str`: 摩斯解密
-
-`Bacon_Encrypt(Bacon: str) -> str`: 培根加密
-
-`Bacon_Decrypt(Bacon: str) -> str`: 培根解密
-
-`Vigenere_Encrypt(Text: str, Key: str) -> str`: 维吉尼亚加密
-
-`Vigenere_Decrypt(Text: str, Key: str) -> str`: 维吉尼亚解密
-
-`Fence_Encrypt(Text: str, Fence: int) -> str`: 栅栏加密
-
-`Fence_Decrypt(Text: str, Fence: int) -> str`: 栅栏解密
-
-`Fence_Attack(Text: str) -> list`: 栅栏攻击
-
-`WFence_Encrypt(Text: str, Fence: int) -> str`: W 型栅栏加密
-
-`WFence_Decrypt(Text: str, Fence: int) -> str`: W 型栅栏解密
-
-`WFence_Attack(Text: str) -> list`: W 型栅栏攻击
-
-`Affine_Encrypt(Text: str, a: int, b: int) -> str`: 仿射加密
-
-`Affine_Decrypt(Text: str, a: int, b: int) -> str`: 仿射解密
-
-`Affine_Attack(Text: str) -> list`: 仿射攻击
-
-`Zodiac(Text: str, Foot: int) -> str`: 十二宫解密
-
-`Yunying(Text: str) -> str`: 云影解密
-
-## Misc 模块
-
-```python
-from Poseidon.Misc import *
+返回值：
+	EncryptedText (str): Base32 编码后的字符串
 ```
 
-### MiscUtils
+`Base32_Decrypt(Text: str) -> str`：
 
-`Binary_String(Binary: str) -> str`: 二进制转字符串
+```
+用于对 Base32 编码的字符串进行解码。
 
-`Binary_Dec(Binary: str) -> str`: 二进制转十进制
+参数：
+	Text (str): 待解码的 Base32 编码字符串
 
-`Binary_Hex(Binary: str) -> str`: 二进制转十六进制
+返回值：
+	DecryptedText (str): Base32 解码后的字符串
+```
 
-`Dec_String(Dec: int) -> str`: 十进制转字符串
+`Base16_Encrypt(Text: str) -> str`：
 
-`Dec_Binary(Dec: int) -> bytes`: 十进制转二进制
+```
+用于对字符串进行 Base16 编码。
 
-`Dec_Hex(Dec: int) -> str`: 十进制转十六进制
+参数：
+	Text (str): 待编码的字符串
 
-`Hex_String(Hex: str) -> str`: 十六进制转字符串
+返回值：
+	EncryptedText (str): Base16 编码后的字符串
+```
 
-`Hex_Binary(Hex: str) -> bytes`: 十六进制转二进制
+`Base16_Decrypt(Text: str) -> str`：
 
-`Hex_Dec(Hex: str) -> str`: 十六进制转十进制
+```
+用于对 Base16 编码的字符串进行解码。
 
-`SHA1(Text: str) -> str`: SHA1
+参数：
+	Text (str): 待解码的 Base16 编码字符串
 
-`SHA256(Text: str) -> str`: SHA256
+返回值：
+	DecryptedText (str): Base16 解码后的字符串
+```
 
-`SHA512(Text: str) -> str`: SHA512
+`AES_Padding(Text: str, BlockSize: int = 16) -> bytes`：
 
-`MD5(Text: str) -> str`: MD5
+```
+用于对字符串进行 zeropadding 处理。
 
-### MiscAdvancedUtils
+参数：
+	Text (str): 待 padding 的字符串
+	BlockSize (可选)(int): 块大小（单位为字节），默认为16字节
 
-`CRC_Burst(Course: str) -> None`: PNG 图片的 CRC 爆破
+返回值：
+	Fill (bytes): padding 后的字节数据
+```
 
-`BinaryToQRCode(BinaryList: list) -> None`: 根据二进制列表数据绘出二维码
+`AES_Encrypt(Text: str, Key: str, BlockSize: int = 16) -> str`：
 
-`RGBToImage(RGBList: list, X: int, Y: int, Mode: str = "Column") -> None`: 根据 RGB 列表数据绘出图片
+```
+用于对字符串进行 AES 加密（仅支持 ECB zeropadding 模式）。
 
-`ImageToRGB(ImageCourse: str, Mode="Column") -> list`: 根据图片得出 RGB 列表数据
+参数：
+	Text (str): 待进行 AES 加密的字符串
+	Key (str): 加密密钥
+	BlockSize (可选)(int): 块大小（单位为字节），默认为16字节
 
-`Request(Url: str, Method: str = "GET", Headers: dict = None, Params: dict = None, Data: dict = None) -> dict`: 对 request 请求操作的封装
+返回值：
+	EncryptedText (str): AES 加密后的密文（Base64 编码形式）
+```
+
+`AES_Decrypt(Text: str, Key: str, BlockSize: int = 16) -> str`：
+
+```
+用于对 AES 密文进行解密（仅支持 ECB zeropadding 模式）。
+
+参数：
+	Text (str): 待解密的 AES 密文（Base64 编码形式）
+	Key (str): 解密密钥
+	BlockSize (可选)(int): 块大小（单位为字节），默认为16字节
+
+返回值：
+	DecryptedText (str): AES 解密后得到的原文
+```
+
+`RSA_Encrypt(Text: str, p: int, q: int, e: int) -> str`：
+
+```
+用于对字符串进行 RSA 加密。
+
+参数：
+	Text (str): 待进行 RSA 加密的字符串
+	p (int): p 值
+	q (int): q 值
+	e (int): e 值
+
+返回值：
+	EncryptedText (str): RSA 加密后的密文（ Base64 编码形式）
+```
+
+`RSA_Base64_Decrypt(Base64Text: str, p: int, q: int, e: int) -> str`：
+
+```
+用于对 Base64 编码形式的 RSA 密文进行解密。
+
+参数：
+	Base64Text (str): 待进行解密的 Base64 编码形式的 RSA 密文
+	p (int): p 值
+	q (int): q 值
+	e (int): e 值
+
+返回值：
+	DecryptedText (str): RSA 解密后得到的原文
+```
+
+`RSA_Long_Decrypt(Long: int, p: int, q: int, e: int) -> str`：
+
+```
+用于对长整数形式的 RSA 密文进行解密。
+
+参数：
+	Long (int): 待进行解密的长整数形式的 RSA 密文
+	p (int): p 值
+	q (int): q 值
+	e (int): e 值
+
+返回值：
+	DecryptedText (str): RSA 解密后得到的原文
+```
+
+`RSA_Wiener_Attack(c: int, e: int, n: int) -> str`：
+
+```
+用于对长整数形式的 RSA 密文进行维纳攻击并解出原文。
+
+参数：
+	c (int): 待进行维纳攻击的长整数形式的 RSA 密文
+	e (int): e 值
+	n (int): n 值
+
+返回值：
+	m (str): RSA 维纳攻击后得到的原文
+```
+
+`RSA_MultiPrime_Attack(c: int, e: int, n: int, primes: list, powers: list = None) -> str`：
+
+```
+用于对长整数形式的 RSA 密文进行多素数攻击并解出原文。
+
+参数：
+	c (int): 待进行多素数攻击的长整数形式的 RSA 密文
+	e (int): e 值
+	n (int): n 值
+	primes (List[int]): 用于攻击的多素数列表
+	powers (可选)(List[int]): 各素数对应的阶数，默认均为 1 次方
+
+返回值：
+	m (str): RSA 多素数攻击后得到的原文
+```
+
+`RSA_LowEncryptionIndex_Attack(c: int, e: int, n: int) -> str`：
+
+```
+用于对长整数形式的 RSA 密文进行低加密指数攻击并解出原文（尝试 10 万次累加 n 超过后会抛出异常）。
+
+参数：
+	c (int): 待进行低加密指数攻击的长整数形式的 RSA 密文
+	e (int): e 值
+	n (int): n 值
+
+返回值：
+	m (str): RSA 低加密指数攻击后得到的原文
+```
+
+`RSA_CommonMod_Attack(c1: int, c2: int, e1: int, e2: int, n: int) -> str`：
+
+```
+用于对长整数形式的 RSA 密文进行共模攻击并解出原文。
+
+参数：
+	c1 (int): 待进行共模攻击的长整数形式的第一串 RSA 密文
+	c2 (int): 待进行共模攻击的长整数形式的第二串 RSA 密文
+	e1 (int): c1 的 e 值
+	e2 (int): c2 的 e 值
+	n (int): n 值
+
+返回值：
+	m (str): RSA 共模攻击后得到的原文
+```
+
+`RSA_Broadcast_Attack(cs: list, e: int, ns: list) -> str`：
+
+```
+用于对长整数形式的 RSA 密文列表进行广播攻击并解出原文。
+
+参数：
+	cs (List[int]): 待进行广播攻击的长整数形式的 RSA 密文列表
+	e (int): e 值
+	ns (List[int]): 各密文对应的 n 值的列表
+
+返回值：
+	m (str): RSA 广播攻击后得到的原文
+```
+
+`RC4_Encrypt(Text: str, Key: str) -> str`：
+
+```
+用于对字符串进行 RC4 加密。
+
+参数：
+	Text (str): 待进行 RC4 加密的字符串
+	Key (str): 加密密钥
+
+返回值：
+	EncryptedText (str): RC4 加密后得到的密文（ Base64 编码形式）
+```
+
+`RC4_Decrypt(Text: str, Key: str) -> str`：
+
+```
+用于对 Base64 编码形式的 RC4 密文进行解密。
+
+参数：
+	Text (str): 待解密的 Base64 编码形式的 RC4 密文
+	Key (str): 解密密钥
+
+返回值：
+	DecryptedText (str): RC4 解密后得到的原文
+```
+
+### ClassicalCryptoUtils 类
+
+本模块用于解决古典密码学问题。
+
+`Caesar_Encrypt(Text: str, Move: int = 3) -> str`：
+
+```
+用于对字符串进行 Caesar 加密。
+
+参数：
+	Text (str): 待进行 Caesar 加密的字符串
+	Move (int): 移位位数，默认为 3
+
+返回值：
+	EncryptedText (str): Caesar 加密后得到的密文
+```
+
+`Caesar_Decrypt(Text: str, Move: int = 3) -> str`：
+
+```
+用于对 Caesar 密文进行解密。
+
+参数：
+	Text (str): 待进行解密的 Caesar 密文
+	Move (int): 移位位数，默认为 3
+
+返回值：
+	DecryptedText (str): Caesar 解密后得到的原文
+```
+
+`Caesar_Attack(Text: str) -> list`：
+
+```
+用于对 Caesar 密文进行爆破攻击。
+
+参数：
+	Text (str): 待进行爆破攻击的 Caesar 密文
+
+返回值：
+	Result (List[str]): Caesar 爆破攻击后得到的字符串列表
+```
+
+`Morse_Encrypt(Text: str) -> str`：
+
+```
+用于对字符串进行 Morse 加密。
+
+参数：
+	Text (str): 待进行 Morse 加密的字符串
+
+返回值：
+	EncryptedText (str): Morse 加密后得到的密文（未找到映射关系的字符将保持不变）
+```
+
+`Morse_Decrypt(Text: str) -> str`：
+
+```
+用于对 Morse 密文进行解密。
+
+参数：
+	Text (str): 待进行解密的 Morse 密文（以'/'进行分隔）
+
+返回值：
+	DecryptedText (str): Morse 解密后得到的原文（未找到映射关系的字符将保持不变）
+```
+
+`Bacon_Encrypt(Text: str) -> str`：
+
+```
+用于对字符串进行 Bacon 加密。
+
+参数：
+	Text (str): 待进行 Bacon 加密的字符串
+
+返回值：
+	EncryptedText (str): Bacon 加密后得到的密文（大写形式 未找到映射关系的字符将以[]包裹）
+```
+
+`Bacon_Decrypt(Text: str) -> str`：
+
+```
+用于对 Bacon 密文进行解密。
+
+参数：
+	Text (str): 待进行解密的 Bacon 密文
+
+返回值：
+	DecryptedText (str): Bacon 解密后得到的原文（大写形式 未找到映射关系的字符将以[]包裹）
+```
+
+`Fence_Encrypt(Text: str, Fence: int) -> str`：
+
+```
+用于对字符串进行 Fence 加密。
+
+参数：
+	Text (str): 待进行 Fence 加密的字符串
+	Fence (int): 栏数
+
+返回值：
+	EncryptedText (str): Fence 加密后得到的密文
+```
+
+`Fence_Decrypt(Text: str, Fence: int) -> str`：
+
+```
+用于对 Fence 密文进行解密。
+
+参数：
+	Text (str): 待进行解密的 Fence 密文
+	Fence (int): 栏数
+
+返回值：
+	DecryptedText (str): Fence 解密后得到的原文
+```
+
+`Fence_Attack(Text: str) -> list`：
+
+```
+用于对 Fence 密文进行爆破攻击。
+
+参数：
+	Text (str): 待进行爆破攻击的 Fence 密文
+
+返回值：
+	Result (List[tuple]): Fence 爆破攻击后得到的元组列表（字符串, 栏数）
+```
+
+`WFence_Encrypt(Text: str, Fence: int) -> str`：
+
+```
+用于对字符串进行 WFence 加密。
+
+参数：
+	Text (str): 待进行 WFence 加密的字符串
+	Fence (int): 栏数
+
+返回值：
+	EncryptedText (str): WFence 加密后得到的密文
+```
+
+`WFence_Decrypt(Text: str, Fence: int) -> str`：
+
+```
+用于对 WFence 密文进行解密。
+
+参数：
+	Text (str): 待进行解密的 WFence 密文
+	Fence (int): 栏数
+
+返回值：
+	DecryptedText (str): WFence 解密后得到的原文
+```
+
+`WFence_Attack(Text: str) -> list`：
+
+```
+用于对 WFence 密文进行爆破攻击。
+
+参数：
+	Text (str): 待进行爆破攻击的 WFence 密文
+
+返回值：
+	Result (List[tuple]): WFence 爆破攻击后得到的元组列表（字符串, 栏数）
+```
+
+### MiscUtils 类
+
+本模块用于处理进制转换和常用哈希。
+
+`Binary_String(Binary: str) -> str`：
+
+```
+用于将形如"1010...0101"的二进制字符串按照"8位1字符"的规则转换为字符串。
+
+参数：
+	Binary (str): 二进制字符串
+
+返回值：
+	String (str): 转换得到的字符串
+```
+
+`Binary_Dec(Binary: str) -> int`：
+
+```
+用于将形如"1010...0101"的二进制字符串转换为十进制整数形式。
+
+参数：
+	Binary (str): 二进制字符串
+
+返回值：
+	Dec (int): 转换得到的十进制整数
+```
+
+`Binary_Hex(Binary: str) -> str`：
+
+```
+用于将形如"1010...0101"的二进制字符串转换为十六进制字符串形式（含 0x 前缀）。
+
+参数：
+	Binary (str): 二进制字符串
+
+返回值：
+	Hex (str): 转换得到的十六进制字符串
+```
+
+`Dec_String(Dec: int) -> str`：
+
+```
+用于将十进制整数转换为字符串（UTF-8 字符集）。
+
+参数：
+	Dec (int): 十进制整数
+
+返回值：
+	String (str): 转换得到的字符串
+```
+
+`Dec_Binary(Dec: int) -> str`：
+
+```
+用于将十进制整数转换为二进制字符串形式（含 0b 前缀）。
+
+参数：
+	Dec (int): 十进制整数
+
+返回值：
+	Binary (str): 转换得到的二进制字符串
+```
+
+`Dec_Hex(Dec: int) -> str`：
+
+```
+用于将十进制整数转换为十六进制字符串形式（含 0x 前缀）。
+
+参数：
+	Dec (int): 十进制整数
+
+返回值：
+	Hex (str): 转换得到的十六进制字符串
+```
+
+`Hex_String(Hex: str) -> str`：
+
+```
+用于将形如"0a0b0c...1c1b1a"的十六进制字符串按照"2位1字符"的规则转换为字符串。
+
+参数：
+	Hex (str): 十六进制字符串
+
+返回值：
+	String (str): 转换得到的字符串
+```
+
+`Hex_Binary(Hex: str) -> str`：
+
+```
+用于将形如"0a0b0c...1c1b1a"的十六进制字符串为二进制字符串形式（含 0b 前缀）。
+
+参数：
+	Hex (str): 十六进制字符串
+
+返回值：
+	Binary (str): 转换得到的二进制字符串
+```
+
+`Hex_Dec(Hex: str) -> int`：
+
+```
+用于将形如"0a0b0c...1c1b1a"的十六进制字符串为十进制整数形式。
+
+参数：
+	Hex (str): 十六进制字符串
+
+返回值：
+	Dec (int): 转换得到的十进制整数
+```
+
+`SHA1(Text: str) -> str`：
+
+```
+用于获取字符串的 SHA1 哈希值。
+
+参数：
+	Text (str): 字符串
+
+返回值：
+	Hash (str): 该字符串的 SHA1 哈希值（十六进制字符串，不含 0x 前缀）
+```
+
+`SHA256(Text: str) -> str`：
+
+```
+用于获取字符串的 SHA256 哈希值。
+
+参数：
+	Text (str): 字符串
+
+返回值：
+	Hash (str): 该字符串的 SHA256 哈希值（十六进制字符串，不含 0x 前缀）
+```
+
+`SHA512(Text: str) -> str`：
+
+```
+用于获取字符串的 SHA512 哈希值。
+
+参数：
+	Text (str): 字符串
+
+返回值：
+	Hash (str): 该字符串的 SHA512 哈希值（十六进制字符串，不含 0x 前缀）
+```
+
+`MD5(Text: str) -> str`：
+
+```
+用于获取字符串的 MD5 哈希值。
+
+参数：
+	Text (str): 字符串
+
+返回值：
+	Hash (str): 该字符串的 MD5 哈希值（十六进制字符串，不含 0x 前缀）
+```
 
 ## PoW 模块
 
-```python
-from Poseidon.PoW import *
+本模块用于解决连接题目环境时可能遇到的工作量证明问题，在 Linux 环境下可以正常运行。
+
+### PoWUtils 类
+
+`ProofOfWork_SHA256_Full(Url: str, Port: int, HashBegin: str, HashEnd: str, TextLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 SHA256 的完整值，求长度为参数 (TextLength:int) 的字符串使得其 SHA256 值与给出的SHA256值相等。
+
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	HashBegin (str): 哈希值之前的字符串
+	HashEnd (str): 哈希值之后的字符串
+	TextLength (int): 待求解的字符串的长度
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
 ```
 
-### PoWUtils
+`ProofOfWork_SHA256_Prefix(Url: str, Port: int, PrefixBegin: str, PrefixEnd: str, PrefixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
 
-`ProofOfWork_SHA256_Full(Url: str, Port: int, Length: int, HashBegin: str, SendAfter: str) -> remote`: 已知 SHA256 的全部内容，求解原文
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 SHA256 的前缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 SHA256 值的前缀与给出的 SHA256 前缀相等。
 
-`ProofOfWork_SHA256_Prefix(Url: str, Port: int, PrefixLength: int, HashBegin: str, SendAfter: str) -> remote`: 已知 SHA256 的前缀，求解 SHA256 前缀相同的字符串
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	PrefixBegin (str): 哈希值前缀之前的字符串
+	PrefixEnd (str): 哈希值前缀之后的字符串
+	PrefixLength (int): 哈希值前缀的字符串的长度
+	MaxTextLength (int): 待求解的字符串的最大长度
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
 
-`ProofOfWork_MD5_Full(Url: str, Port: int, Length: int, HashBegin: str, SendAfter: str) -> remote`: 已知 MD5 的全部内容，求解原文
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
+```
 
-`ProofOfWork_MD5_Prefix(Url: str, Port: int, PrefixLength: int, HashBegin: str, SendAfter: str) -> remote`: 已知 MD5 的前缀，求解 MD5 前缀相同的字符串
+`ProofOfWork_SHA256_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 SHA256 值的二进制形式中末尾所包含的 0 的个数为（EndWithZeroLength:int）。
+
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	KnownBegin (str): 已知部分之前的字符串
+	KnownEnd (str): 已知部分之后的字符串
+	UnknownLength (int): 未知部分的字符串的长度
+	EndWithZeroLength (int): SHA256 值的二进制形式中末尾所包含的 0 的个数
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
+```
+
+`ProofOfWork_MD5_Full(Url: str, Port: int, HashBegin: str, HashEnd: str, TextLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 MD5 的完整值，求长度为参数 (TextLength:int) 的字符串使得其 MD5 值与给出的 MD5 值相等。
+
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	HashBegin (str): 哈希值之前的字符串
+	HashEnd (str): 哈希值之后的字符串
+	TextLength (int): 待求解的字符串的长度
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
+```
+
+`ProofOfWork_MD5_Prefix(Url: str, Port: int, PrefixBegin: str, PrefixEnd: str, PrefixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 MD5 的前缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 MD5 值的前缀与给出的 MD5 前缀相等。
+
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	PrefixBegin (str): 哈希值前缀之前的字符串
+	PrefixEnd (str): 哈希值前缀之后的字符串
+	PrefixLength (int): 哈希值前缀的字符串的长度
+	MaxTextLength (int): 待求解的字符串的最大长度
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
+```
+
+`ProofOfWork_MD5_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 MD5 值的二进制形式中末尾所包含的 0 的个数为（EndWithZeroLength:int）。
+
+参数：
+	Url (str): 题目环境的链接地址
+	Port (int): 题目环境的端口号
+	KnownBegin (str): 已知部分之前的字符串
+	KnownEnd (str): 已知部分之后的字符串
+	UnknownLength (int): 未知部分的字符串的长度
+	EndWithZeroLength (int): MD5 值的二进制形式中末尾所包含的 0 的个数
+	SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+	Connection (pwn.remote): 与服务器建立的连接对象
+```
 
 # 开源许可
 
