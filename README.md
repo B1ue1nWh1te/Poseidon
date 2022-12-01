@@ -23,7 +23,7 @@
 3. 在使用 `Blockchain` 模块时，如果题目环境禁用了部分链上交互的 API ，可以考虑注释掉 `web3py` 中的部分代码以使得脚本能够正常运行。如我之前遇到的 EIP-1559 相关 API 被禁用，我修改了 `web3py` 库目录下的 `_utils/transactions.py` 中的 `TRANSACTION_DEFAULTS` 变量，注释掉了其中的`maxFeePerGas`和`maxPriorityFeePerGas`字段，以禁止脚本在运行时访问了被禁用的 API ，从而实现正常运行。
 4. `Blockchain` 模块的所有功能均在`Goerli`测试网络中测试通过。
 5. `PoW`模块在`Linux`系统下运行正常。
-6. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提`issue`进行反馈。
+6. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
 
 # 安装
 
@@ -554,6 +554,10 @@ Contract 对象是与指定合约进行交互的基础。
 ## Cryptography 模块
 
 本模块用于解决常见的密码学问题。
+
+```python
+from Poseidon.Cryptography import ModernCryptoUtils, ClassicalCryptoUtils, MiscUtils
+```
 
 ### ModernCryptoUtils 类
 
@@ -1236,6 +1240,10 @@ Contract 对象是与指定合约进行交互的基础。
 ## PoW 模块
 
 本模块用于解决连接题目环境时可能遇到的工作量证明问题，在 Linux 环境下可以正常运行。
+
+```python
+from Poseidon.PoW import PoWUtils
+```
 
 ### PoWUtils 类
 
