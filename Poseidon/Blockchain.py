@@ -18,8 +18,13 @@ class Chain():
         """Chain 对象初始化函数。（当连接失败时会抛出异常）
 
         参数：
-            RPCUrl (str): 要连接的链的 RPC 链接地址
-            RequestParams (可选)(dict): 指定连接时使用的 request 参数，默认为 None，例如需要使用代理进行访问，则将该变量设置为{"proxies": {"http": "http://127.0.0.1:<Port>","https": "http://127.0.0.1:<Port>"}}
+            RPCUrl (str): 要连接的链的 RPC 地址
+            RequestParams (可选)(dict): 指定连接时使用的 request 参数，默认为 None。\n例如需要使用代理进行访问，则传入 {"proxies": {"http": "http://127.0.0.1:<ProxyPort>","https": "http://127.0.0.1:<ProxyPort>"}}
+
+        成员变量：
+            Net (Web3.HTTPProvider): web3py 实例化的链交互器对象
+            ChainId (int): 链 ID
+            ClientVersion (str): 所连接的 RPC 的 geth 等客户端软件的版本号
         """
         from web3 import HTTPProvider
         from web3.middleware import geth_poa_middleware
@@ -40,45 +45,25 @@ class Chain():
         """获取链的基本信息。包括链 ID 、区块高度、当前 GasPrice(Gwei) 、所连接的 RPC 的 geth 等客户端软件的版本号。
 
         返回值：
-            BasicInformation (dict): 链的基本信息构成的字典。{"ChainId"|"BlockNumber"|"GasPrice"|"ClientVersion"}
+            BasicInformation (dict): 链的基本信息构成的字典。
+            {"ChainId"|"BlockNumber"|"GasPrice"|"ClientVersion"}
         """
-        ChainId = self.Net.eth.chainId
+        self.ChainId = self.Net.eth.chainId
+        self.ClientVersion = self.Net.clientVersion
         BlockNumber = self.Net.eth.block_number
         GasPrice = Web3.fromWei(self.Net.eth.gas_price, "gwei")
-        ClientVersion = self.Net.clientVersion
-        logger.success(f"\n[Chain][GetBasicInformation]\n[ChainId]{ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[ClientVersion]{ClientVersion}")
-        return {"ChainId": ChainId, "BlockNumber": BlockNumber, "GasPrice": GasPrice, "ClientVersion": ClientVersion}
-
-    def GetBlockInformation(self, BlockID="latest") -> dict:
-        """根据 BlockID 获取区块信息。包括区块哈希、区块号、区块时间戳、区块内交易总数。
-
-        参数：
-            BlockID (str|int): 区块 ID ，可以为字符串如'latest'|'earliest'，也可以为整数即要获取信息的区块的高度
-
-        返回值：
-            BlockInformation (dict): 区块信息构成的字典（当出现异常时返回 None ）{"BlockID"|"BlockHash"|"BlockNumber"|"BlockTimeStamp"|"BlockTransactionAmount"}
-        """
-        try:
-            Info = self.Net.eth.get_block(BlockID)
-            BlockHash = Info.hash.hex()
-            BlockNumber = Info.number
-            BlockTimeStamp = Info.timestamp
-            BlockTransactionAmount = len(Info.transactions)
-            logger.success(f"\n[Chain][GetBlockInformation][{BlockID}]\n[Hash]{BlockHash}\n[Number]{BlockNumber}\n[TimeStamp]{BlockTimeStamp}\n[TransactionAmount]{BlockTransactionAmount}")
-            return {"BlockID": BlockID, "BlockHash": BlockHash, "BlockNumber": BlockNumber, "BlockTimeStamp": BlockTimeStamp, "BlockTransactionAmount": BlockTransactionAmount}
-        except Exception:
-            ExceptionInformation = exc_info()
-            logger.error(f"\n[Chain][GetBlockInformation][{BlockID}]\nFailed to get block [{BlockID}] information.\n[ExceptionInformation]{ExceptionInformation}")
-            return None
+        logger.success(f"\n[Chain][GetBasicInformation]\n[ChainId]{self.ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{GasPrice} Gwei\n[ClientVersion]{self.ClientVersion}")
+        return {"ChainId": self.ChainId, "BlockNumber": BlockNumber, "GasPrice": GasPrice, "ClientVersion": self.ClientVersion}
 
     def GetTransactionInformationByHash(self, TransactionHash: str) -> dict:
-        """根据交易哈希获取交易数据。包括交易类型（Traditional|EIP-1559）、交易所在区块号、发送者、接收者、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas)(Gwei))、GasLimit、Nonce、Value、InputData。
+        """根据交易哈希获取交易信息。包括交易类型（Traditional|EIP-1559）、交易所在区块号、发送者、接收者、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas)(Gwei))、GasLimit、Nonce、Value、InputData。
 
         参数：
             TransactionHash (str): 要查询的交易的哈希
 
         返回值：
-            TransactionInformation (dict): 交易数据构成的字典（当出现异常时返回 None ）{"TransactionHash"|"TransactionType"|"BlockNumber"|"From"|"To"|("GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas"))|"GasLimit"|"Nonce"|"Value"|"InputData"}
+            TransactionInformation (dict): 交易数据构成的字典（当出现异常时返回 None ）
+            {"TransactionHash"|"TransactionType"|"BlockNumber"|"From"|"To"|{"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")}|"GasLimit"|"Nonce"|"Value"|"InputData"}
         """
         try:
             Info = self.Net.eth.get_transaction(TransactionHash)
@@ -118,6 +103,7 @@ class Chain():
             Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
         """
         try:
+            Address = Web3.toChecksumAddress(Address)
             Balance = self.Net.eth.get_balance(Address)
             logger.success(f"\n[Chain][GetBalance][{Address}]\n[{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]")
             return Balance
@@ -136,6 +122,7 @@ class Chain():
             Code (str): 合约字节码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
         """
         try:
+            Address = Web3.toChecksumAddress(Address)
             Code = self.Net.eth.get_code(Address).hex()
             logger.success(f"\n[Chain][GetCode][{Address}]\n[Code]{Code}")
             return Code
@@ -155,6 +142,7 @@ class Chain():
             Data (str): 存储值（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
         """
         try:
+            Address = Web3.toChecksumAddress(Address)
             Data = self.Net.eth.get_storage_at(Address, Index).hex()
             logger.success(f"\n[Chain][GetStorage][{Address}][{Index}]\n[Hex][{Data}]<=>[Dec][{int(Data,16)}]")
             return Data
@@ -174,6 +162,7 @@ class Chain():
             Data (List[str]): 存储值列表（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
         """
         try:
+            Address = Web3.toChecksumAddress(Address)
             Data = [self.Net.eth.get_storage_at(Address, i).hex() for i in range(Count)]
             Temp = '\n'.join(Data)
             logger.success(f"\n[Chain][DumpStorage][{Address}][slot 0 ... {Count-1}]\n{Temp}")
@@ -212,11 +201,6 @@ class Chain():
                 f"\n[Chain][GetPublicKeyByTransactionHash]\n[TransactionHash]{TransactionHash}\nFailed to get public key by transaction hash.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
-    def RecoverPrivateKeyBySameRandomTransaction(self, TransactionOneHash: str, TransactionTwoHash: str) -> str:
-        """利用同一个账户发送的两笔具有相同 r 值的交易，破解出该账户的私钥。（由于实现较为复杂，先填个坑，在下个版本推出）
-        """
-        pass
-
 
 class Account():
     """
@@ -229,6 +213,11 @@ class Account():
         参数：
             Chain (Poseidon.Blockchain.Chain): 链对象
             PrivateKey (str): 账户私钥（十六进制形式 不含 0x 前缀）
+
+        成员变量：
+            Chain (Poseidon.Blockchain.Chain): 链对象
+            Address (str): 账户地址
+            PrivateKey (str): 账户私钥
         """
 
         try:
@@ -246,7 +235,7 @@ class Account():
             raise Exception("Failed to import account.")
 
     def GetSelfBalance(self) -> int:
-        """获取自身账户的主币余额。
+        """获取自身账户的主币余额。（当余额为 0 时会输出无法发送交易的警告）
 
         返回值：
             Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
@@ -256,26 +245,28 @@ class Account():
             logger.warning(f"\n[Account][GetSelfBalance]Warning: This account's balance is insufficient to pay transactions fee.")
         return Balance
 
-    def Transfer(self, To: str, Amount: int, Data: str = "0x") -> dict:
-        """向指定账户转账指定数量的主币，可附带信息。（若 90 秒内交易未确认则作超时处理）
+    def Transfer(self, To: str, Value: int, Data: str = "0x") -> dict:
+        """向指定账户转账指定数量的主币，可附带信息。（GasLimit 为 100000，若 90 秒内交易未确认则作超时处理）
 
         参数：
             To (str): 接收方地址
-            Amount (int): 发送的主币数量（单位为 ether ）
+            Value (int): 发送的主币数量（单位为 wei ）
             Data (可选)(str): 交易数据（十六进制形式 含 0x 前缀），默认值为 "0x"
 
         返回值：
-            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"}
+            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
         try:
-            Value = Web3.toWei(Amount, 'ether')
+            From = Web3.toChecksumAddress(self.Address)
+            To = Web3.toChecksumAddress(To)
             Txn = {
-                "chainId": self.Net.eth.chainId,
-                "from": self.Address,
-                "to": Web3.toChecksumAddress(To),
+                "chainId": self.Chain.ChainId,
+                "from": From,
+                "to": To,
                 "nonce": self.Net.eth.get_transaction_count(self.Address),
                 "value": Value,
-                "gasPrice": round(self.Net.eth.gas_price * 1.2),
+                "gasPrice": self.Net.eth.gas_price,
                 "gas": 100000,
                 "data": Data,
             }
@@ -288,37 +279,41 @@ class Account():
             if Status:
                 BlockNumber = TransactionReceipt.blockNumber
                 GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
                 logger.success(
-                    f"\n[Account][Transfer][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{self.Address}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}")
-                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": self.Address, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data}
+                    f"\n[Account][Transfer][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{From}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}\n[Logs]{Logs}")
+                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": From, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data, "Logs": Logs}
             else:
                 logger.error(f"\n[Account][Transfer][Fail]\n[TransactionHash]{TransactionHash}")
                 return {"Status": Status, "TransactionHash": TransactionHash}
         except Exception:
             ExceptionInformation = exc_info()
-            logger.error(f"\n[Account][Transfer][Error]\n[To]{To}\n[Amount]{Amount}\n[Data]{Data}\nFailed to transfer to [{To}].\n[ExceptionInformation]{ExceptionInformation}")
+            logger.error(f"\n[Account][Transfer][Error]\n[From]{From}\n[To]{To}\n[Value]{Value}\n[Data]{Data}\nFailed to transfer to [{To}].\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
-    def SendTransaction(self, To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict:
+    def SendTransaction(self, To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict:
         """发送一笔自定义交易（传统方式）。（若 90 秒内交易未确认则作超时处理）
 
         参数：
             To (str): 交易接收方地址
             Data (str): 交易数据（十六进制形式 含 0x 前缀）
             Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
-            GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
+            GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 1000000 wei
 
         返回值：
-            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
         try:
+            From = Web3.toChecksumAddress(self.Address)
+            To = Web3.toChecksumAddress(To)
             Txn = {
-                "chainId": self.Net.eth.chainId,
-                "from": self.Address,
-                "to": Web3.toChecksumAddress(To),
+                "chainId": self.Chain.ChainId,
+                "from": From,
+                "to": To,
                 "nonce": self.Net.eth.get_transaction_count(self.Address),
                 "value": Value,
-                "gasPrice": round(self.Net.eth.gas_price * 1.2),
+                "gasPrice": self.Net.eth.gas_price,
                 "gas": GasLimit,
                 "data": Data,
             }
@@ -333,8 +328,8 @@ class Account():
                 GasUsed = TransactionReceipt.gasUsed
                 Logs = TransactionReceipt.logs
                 logger.success(
-                    f"\n[Account][SendTransaction][Traditional][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{self.Address}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}\n[Logs]{Logs}")
-                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": self.Address, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data, "Logs": Logs}
+                    f"\n[Account][SendTransaction][Traditional][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{From}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}\n[Logs]{Logs}")
+                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": From, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data, "Logs": Logs}
             else:
                 logger.error(f"\n[Account][SendTransaction][Traditional][Fail]\n[TransactionHash]{TransactionHash}")
                 return {"Status": Status, "TransactionHash": TransactionHash}
@@ -343,34 +338,37 @@ class Account():
             logger.error(f"\n[Account][SendTransaction][Traditional][Error]Failed to send transaction.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
-    def SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, GasLimit: int = 10000000) -> dict:
+    def SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict:
         """发送一笔自定义交易（EIP-1559方式）。（若 90 秒内交易未确认则作超时处理）
 
         参数：
             To (str): 交易接收方地址
             Data (str): 交易数据（十六进制形式 含 0x 前缀）
             Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
-            GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
+            GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 1000000 wei
 
         返回值：
-            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
         try:
-            MaxPriorityFee = self.Net.eth.max_priority_fee * 2
+            From = Web3.toChecksumAddress(self.Address)
+            To = Web3.toChecksumAddress(To)
+            BaseFee = self.Net.eth.gas_price
+            MaxPriorityFee = Web3.toWei(1, "gwei") + self.Net.eth.max_priority_fee
             Txn = {
-                "chainId": self.Net.eth.chainId,
-                "from": self.Address,
-                "to": Web3.toChecksumAddress(To),
+                "chainId": self.Chain.ChainId,
+                "from": From,
+                "to": To,
                 "nonce": self.Net.eth.get_transaction_count(self.Address),
                 "value": Value,
-                "maxFeePerGas": MaxPriorityFee,
+                "maxFeePerGas": BaseFee + MaxPriorityFee,
                 "maxPriorityFeePerGas": MaxPriorityFee,
                 "gas": GasLimit,
                 "data": Data
             }
             SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
             TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
-            Txn["gasPrice"] = f'{Web3.fromWei(Txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][SendTransaction][EIP-1559]\n[TransactionHash]{TransactionHash}\n[Txn]{dumps(Txn, indent=2)}")
             TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=90)
             Status = TransactionReceipt.status
@@ -379,8 +377,8 @@ class Account():
                 GasUsed = TransactionReceipt.gasUsed
                 Logs = TransactionReceipt.logs
                 logger.success(
-                    f"\n[Account][SendTransaction][EIP-1559][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{self.Address}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}\n[Logs]{Logs}")
-                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": self.Address, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data, "Logs": Logs}
+                    f"\n[Account][SendTransaction][EIP-1559][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[From]{From}\n[To]{To}\n[Value]{Value} [GasUsed]{GasUsed}\n[Data]{Data}\n[Logs]{Logs}")
+                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "From": From, "To": To, "Value": Value, "GasUsed": GasUsed, "Data": Data, "Logs": Logs}
             else:
                 logger.error(f"\n[Account][SendTransaction][EIP-1559][Fail]\n[TransactionHash]{TransactionHash}")
                 return {"Status": Status, "TransactionHash": TransactionHash}
@@ -390,7 +388,7 @@ class Account():
             return None
 
     def DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict:
-        """部署合约（若 90 秒内交易未确认则作超时处理）。
+        """部署合约。（若 90 秒内交易未确认则作超时处理）
 
         参数：
             ABI (dict): 合约 ABI
@@ -399,17 +397,19 @@ class Account():
             *Arguments (可选)(any): 传给合约构造函数的参数，默认为空
 
         返回值：
-            TransactionInformation (dict): 交易回执信息构成的字典（其中"Contract"为已实例化的 Contract 对象 当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"|"Contract"}
+            TransactionInformation (dict): 交易回执信息构成的字典（其中"Contract"为已实例化的 Contract 对象 当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"|"Contract"}
         """
         try:
             DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
             TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
+            From = Web3.toChecksumAddress(self.Address)
             Txn = {
-                "chainId": self.Net.eth.chainId,
-                "from": self.Address,
+                "chainId": self.Chain.ChainId,
+                "from": From,
                 "nonce": self.Net.eth.get_transaction_count(self.Address),
                 "value": TransactionData["value"],
-                "gasPrice": round(self.Net.eth.gas_price * 1.2),
+                "gasPrice": self.Net.eth.gas_price,
                 "gas": TransactionData["gas"],
                 "data": TransactionData["data"]
             }
@@ -435,14 +435,59 @@ class Account():
             logger.error(f"\n[Account][DeployContract][Error]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
-    def SignMessage(self, Message: str) -> dict:
-        """以 EIP-191 标准对消息进行签名。
+    def DeployContractWithoutABI(self, Bytecode: str, Value: int = 0, GasLimit: int = 10000000) -> dict:
+        """在没有 ABI 的情况下，仅使用字节码来部署合约。（若 90 秒内交易未确认则作超时处理）
 
         参数：
-            Message (str): 待签名消息
+            Bytecode (str): 合约字节码（十六进制形式 含 0x 前缀）
+            Value (可选)(int): 随交易发送给合约的主币数量（单位为 wei ），默认为 0 wei
+            GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
 
         返回值：
-            SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）{"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
+            TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"}
+        """
+        try:
+            From = Web3.toChecksumAddress(self.Address)
+            Txn = {
+                "chainId": self.Chain.ChainId,
+                "from": From,
+                "nonce": self.Net.eth.get_transaction_count(self.Address),
+                "value": Value,
+                "gasPrice": self.Net.eth.gas_price,
+                "gas": GasLimit,
+                "data": Bytecode,
+            }
+            SignedTxn = self.Net.eth.account.sign_transaction(Txn, self.PrivateKey)
+            TransactionHash = self.Net.eth.send_raw_transaction(SignedTxn.rawTransaction).hex()
+            logger.info(f"\n[Account][DeployContractWithoutABI]\n[TransactionHash]{TransactionHash}\n[Txn]{dumps(Txn, indent=2)}")
+            TransactionReceipt = self.Net.eth.wait_for_transaction_receipt(TransactionHash, timeout=90)
+            Status = TransactionReceipt.status
+            if Status:
+                ContractAddress = TransactionReceipt.contractAddress
+                BlockNumber = TransactionReceipt.blockNumber
+                GasUsed = TransactionReceipt.gasUsed
+                Logs = TransactionReceipt.logs
+                logger.success(
+                    f"\n[Account][DeployContractWithoutABI][Success]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[ContractAddress]{ContractAddress}\n[Value]{Value} [GasUsed]{GasUsed}\n[Logs]{Logs}")
+                return {"Status": Status, "TransactionHash": TransactionHash, "BlockNumber": BlockNumber, "ContractAddress": ContractAddress, "Value": Value, "GasUsed": GasUsed, "Logs": Logs}
+            else:
+                logger.error(f"\n[Account][DeployContractWithoutABI][Fail]\n[TransactionHash]{TransactionHash}")
+                return {"Status": Status, "TransactionHash": TransactionHash}
+        except Exception:
+            ExceptionInformation = exc_info()
+            logger.error(f"\n[Account][DeployContractWithoutABI][Error]Failed to deploy contract.\n[ExceptionInformation]{ExceptionInformation}")
+            return None
+
+    def SignMessage(self, Message: str) -> dict:
+        """对消息字符串进行签名。
+
+        参数：
+            Message (str): 待签名消息字符串
+
+        返回值：
+            SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）\n
+            {"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
         """
         from eth_account.messages import encode_defunct
         try:
@@ -459,7 +504,32 @@ class Account():
         except Exception:
             ExceptionInformation = exc_info()
             logger.error(
-                f"\n[Account][SignMessage]\n[Address]{self.Address}\n[Message]{Message}\nFailed to sign messge.\n[ExceptionInformation]{ExceptionInformation}")
+                f"\n[Account][SignMessage]\n[Address]{self.Address}\n[Message]{Message}\nFailed to sign message.\n[ExceptionInformation]{ExceptionInformation}")
+            return None
+
+    def SignMessageHash(self, MessageHash: str) -> dict:
+        """对消息哈希进行签名。
+
+        参数：
+            MessageHash (str): 待签名消息哈希
+
+        返回值：
+            SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）\n
+            {"Address"|"MessageHash"|"Signature"|"R"|"S"|"V"}
+        """
+        try:
+            SignedMessage = EthAccount.signHash(MessageHash, self.PrivateKey)
+            Signature = SignedMessage.signature.hex()
+            R = hex(SignedMessage.r)
+            S = hex(SignedMessage.s)
+            V = hex(SignedMessage.v)
+            logger.success(
+                f"\n[Account][SignMessageHash]\n[Address]{self.Address}\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[R]{R}\n[S]{S}\n[V]{V}")
+            return {"Address": self.Address, "MessageHash": MessageHash, "Signature": Signature, "R": R, "S": S, "V": V}
+        except Exception:
+            ExceptionInformation = exc_info()
+            logger.error(
+                f"\n[Account][SignMessageHash]\n[Address]{self.Address}\n[MessageHash]{MessageHash}\nFailed to sign message hash.\n[ExceptionInformation]{ExceptionInformation}")
             return None
 
 
@@ -475,6 +545,11 @@ class Contract():
             Account (Poseidon.Blockchain.Account): 账户对象
             Address (str): 合约地址
             ABI (str): 合约 ABI
+
+        成员变量：
+            Account (Poseidon.Blockchain.Account): 账户对象
+            Address (str): 合约地址
+            Instance (Web3.eth.Contract): web3py 原生 contract 对象实例
         """
         try:
             self.Account = Account
@@ -495,7 +570,8 @@ class Contract():
             *FunctionArguments (可选)(any): 函数参数，默认为空
 
         返回值：
-            TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+            TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
         TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction()
         logger.info(f"\n[Contract][CallFunction]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}")
@@ -512,7 +588,8 @@ class Contract():
             *FunctionArguments (可选)(any): 函数参数，默认为空
 
         返回值：
-            TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+            TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
+            {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
         TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": Value, "gas": GasLimit})
         logger.info(
@@ -568,7 +645,7 @@ class BlockchainUtils():
 
     @staticmethod
     def SwitchSolidityVersion(SolidityVersion: str):
-        """设置当前使用的 Solidity 版本，若该版本文件未安装则会自动安装。（当设置版本失败时会抛出异常）
+        """设置当前使用的 Solidity 版本，若该版本未安装则会自动安装。（当设置版本失败时会抛出异常）
 
         参数：
             SolidityVersion (str): Solidity 版本号
@@ -591,7 +668,7 @@ class BlockchainUtils():
             FileCourse (str): 合约文件完整路径（当合约文件与脚本文件在同一目录下时可直接使用文件名）
             ContractName (str): 要编译的合约名称
             SolidityVersion (可选)(str): 指定使用的 Solidity 版本（若不指定则会使用当前已激活的 Solidity 版本进行编译），默认为 None
-            AllowPaths (可选)(str): 指定路径白名单（在编译时可能会出现 AllowPaths 相关错误，可在这里解决），默认为 None 
+            AllowPaths (可选)(str): 指定路径白名单（在编译时可能会出现 AllowPaths 相关错误，可在这里解决），默认为 None
             Optimize (可选)(str): 是否开启优化器，False 为关闭，True 为开启，默认为 False
 
         返回值：
@@ -630,10 +707,10 @@ class BlockchainUtils():
 
     @staticmethod
     def MnemonicToAddressAndPrivateKey(Mnemonic: str) -> tuple:
-        """将助记词转换为账户地址与私钥（参考 BIP-32 标准）。
+        """将助记词转换为账户地址与私钥（参考 BIP-39 标准）。
 
         参数：
-            Mnemonic (str): 助记词以空格进行分隔而组成的字符串（参考 BIP-39 标准）
+            Mnemonic (str): 助记词以空格进行分隔而组成的字符串
 
         返回值：
             (Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组（当出现异常时返回 None ）
@@ -675,7 +752,7 @@ class BlockchainUtils():
             return None
 
     @staticmethod
-    def RecoverMessageByHash(MessageHash: str, Signature: str) -> str:
+    def RecoverMessageHash(MessageHash: str, Signature: str) -> str:
         """通过消息哈希和签名还原出签署者的账户地址。
 
         参数：
@@ -717,7 +794,7 @@ class BlockchainUtils():
 
     @staticmethod
     def CrackSelector(TargetFunctionName: str, TargetFunctionParameters: list, GenerateFunctionParameters: list) -> str:
-        """根据目标函数名与参数以及要生成的函数的参数，爆破出一个函数名，以使得这两个函数的 Selector 相等。（理论上可解，但是 Python 实在是太慢了，留个坑以后看看是否能提速）
+        """根据目标函数名与参数以及要生成的函数的参数，爆破出一个函数名，以使得这两个函数的 Selector 相等。（现在还是单线程，非常非常慢，之后有时间了再进行优化）
 
         参数：
             TargetFunctionName (str): 目标函数名
@@ -759,7 +836,7 @@ class BlockchainUtils():
             Assembly (str): EVM Assembly 字符串
 
         返回值：
-            Bytecode (str): EVM Bytecode （十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+            Bytecode (str): EVM Bytecode（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
         """
         try:
             from pyevmasm import assemble_hex
@@ -780,7 +857,7 @@ class BlockchainUtils():
             Bytecode (str): EVM Bytecode 字符串（十六进制形式 含 0x 前缀）
 
         返回值：
-            Assembly (str): EVM Assembly （当出现异常时返回 None ）
+            Assembly (str): EVM Assembly（当出现异常时返回 None ）
         """
         try:
             from pyevmasm import disassemble_hex
