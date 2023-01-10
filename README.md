@@ -2,7 +2,7 @@
 
 # Poseidon
 
-![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?description=1&font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fseaeye%2Flogo.png&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Light)
+![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fseaeye%2Flogo.png&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Light)
 
 **海神波塞冬 Poseidon**， CTF 解题快速利用工具，是攻克 Blockchain 方向的得力助手，
 
@@ -22,8 +22,8 @@
 
 2. 在使用 `Blockchain` 模块时，你始终应该使用全新生成的账户，而不是导入常用的具有实际价值的账户，以确保你的账户安全。
 
-3. 在使用 `Blockchain` 模块时，如果题目环境禁用了部分链上交互的 API ，可以考虑注释掉 `web3py` 中的部分代码以使得脚本能够正常运行。如我之前遇到的 EIP-1559 相关 API 被禁用，我修改了 `web3py` 库目录下的 `_utils/transactions.py` 中的 `TRANSACTION_DEFAULTS` 变量，注释掉了其中的`maxFeePerGas`和`maxPriorityFeePerGas`字段，以禁止脚本在运行时访问了被禁用的 API ，从而实现正常运行。
-4. `Blockchain` 模块的所有功能均在`Goerli`测试网络中测试通过。
+3. 在使用 `Blockchain` 模块时，如果题目环境禁用了部分链上交互的 API ，可以考虑注释掉 `web3py` 中的部分代码以使得脚本能够正常运行。如我之前遇到的 EIP-1559 相关 API 被禁用，我修改了 `web3py` 库目录下的 `_utils/transactions.py` 中的 `TRANSACTION_DEFAULTS` 变量，注释掉了其中的`maxFeePerGas`和`maxPriorityFeePerGas`字段，以避免脚本在运行时访问被禁用的 API ，从而实现脚本正常跑通。
+4. `Blockchain` 模块的所有功能均在`Goerli`测试网络中测试正常通过。
 5. `PoW`模块在`Linux`系统下运行正常。
 6. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
 
@@ -44,6 +44,7 @@ pip install -U poseidon-python
 基本的使用方法可以参考我之前参加比赛时写的 WriteUps：
 
 - [第五届“强网”拟态防御国际精英挑战赛线上预选赛 区块链方向题解](https://www.seaeye.cn/archives/487.html)
+- [2023 RealWorldCTF 体验赛 Blockchain Writeup](https://www.seaeye.cn/archives/494.html)
 
 ```python
 from Poseidon.Blockchain import *
