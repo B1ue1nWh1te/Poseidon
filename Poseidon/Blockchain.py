@@ -402,14 +402,14 @@ class Account():
         """
         try:
             DeployingContract = self.Net.eth.contract(abi=ABI, bytecode=Bytecode)
-            TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"value": Value})
+            TransactionData = DeployingContract.constructor(*Arguments).buildTransaction({"gasPrice": self.Net.eth.gas_price, "value": Value})
             From = Web3.toChecksumAddress(self.Address)
             Txn = {
                 "chainId": self.Chain.ChainId,
                 "from": From,
                 "nonce": self.Net.eth.get_transaction_count(self.Address),
                 "value": TransactionData["value"],
-                "gasPrice": self.Net.eth.gas_price,
+                "gasPrice": TransactionData["gasPrice"],
                 "gas": TransactionData["gas"],
                 "data": TransactionData["data"]
             }
@@ -573,7 +573,7 @@ class Contract():
             TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
             {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
-        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction()
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"gasPrice": self.Net.eth.gas_price})
         logger.info(f"\n[Contract][CallFunction]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}")
         TransactionResult = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])
         return TransactionResult
@@ -591,7 +591,7 @@ class Contract():
             TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）\n
             {"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
         """
-        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"value": Value, "gas": GasLimit})
+        TransactionData = self.Instance.functions[FunctionName](*FunctionArguments).buildTransaction({"gasPrice": self.Net.eth.gas_price, "gas": GasLimit, "value": Value})
         logger.info(
             f"\n[Contract][CallFunctionWithValueAndGasLimit]\n[ContractAddress]{self.Address}\n[Function]{FunctionName}{FunctionArguments}\n[Value]{TransactionData['value']} [Gas]{TransactionData['gas']}")
         TransactionResult = self.Account.SendTransaction(self.Address, TransactionData["data"], TransactionData["value"], TransactionData["gas"])

@@ -9,11 +9,11 @@ def long_description():
 
 setup(
     name="poseidon-python",
-    version="1.0.5",
+    version="1.0.6",
     author="B1ue1nWh1te",
     author_email="b1ue1nwh1te@skiff.com",
-    description="CTF 解题快速利用工具，是攻克 Blockchain 方向的得力助手，也包含一些 Crypto 方向的功能，可用于快速编写解题脚本而免去以往繁琐的步骤。",
-    keywords=['POSEIDON', 'TOOLS', 'CTF', 'BLOCKCHAIN', 'CRYPTO', 'EVM'],
+    description="海神波塞冬工具对常用的链上交互操作进行了封装，使得开发者能够便捷地与任何以太坊同构链交互，主要用于在CTF比赛中攻克Blockchain方向的题目。",
+    keywords=['POSEIDON', 'BLOCKCHAIN', 'EVM', 'CRYPTO', 'CTF'],
     long_description=long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/B1ue1nWh1te/Poseidon",
