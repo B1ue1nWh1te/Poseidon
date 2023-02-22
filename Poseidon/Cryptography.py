@@ -15,7 +15,8 @@ class MiscUtils():
 
     @staticmethod
     def Binary_String(Binary: str) -> str:
-        """用于将形如"1010...0101"的二进制字符串按照"8位1字符"的规则转换为字符串。
+        """
+        用于将形如"1010...0101"的二进制字符串按照"8位1字符"的规则转换为字符串。
 
         参数：
             Binary (str): 二进制字符串
@@ -30,7 +31,8 @@ class MiscUtils():
 
     @staticmethod
     def Binary_Dec(Binary: str) -> int:
-        """用于将形如"1010...0101"的二进制字符串转换为十进制整数形式。
+        """
+        用于将形如"1010...0101"的二进制字符串转换为十进制整数形式。
 
         参数：
             Binary (str): 二进制字符串
@@ -43,7 +45,8 @@ class MiscUtils():
 
     @staticmethod
     def Binary_Hex(Binary: str) -> str:
-        """用于将形如"1010...0101"的二进制字符串转换为十六进制字符串形式（含 0x 前缀）。
+        """
+        用于将形如"1010...0101"的二进制字符串转换为十六进制字符串形式（含 0x 前缀）。
 
         参数：
             Binary (str): 二进制字符串
@@ -56,7 +59,8 @@ class MiscUtils():
 
     @staticmethod
     def Dec_String(Dec: int) -> str:
-        """用于将十进制整数转换为字符串（UTF-8 字符集）。
+        """
+        用于将十进制整数转换为字符串（UTF-8 字符集）。
 
         参数：
             Dec (int): 十进制整数
@@ -70,7 +74,8 @@ class MiscUtils():
 
     @staticmethod
     def Dec_Binary(Dec: int) -> str:
-        """用于将十进制整数转换为二进制字符串形式（含 0b 前缀）。
+        """
+        用于将十进制整数转换为二进制字符串形式（含 0b 前缀）。
 
         参数：
             Dec (int): 十进制整数
@@ -83,7 +88,8 @@ class MiscUtils():
 
     @staticmethod
     def Dec_Hex(Dec: int) -> str:
-        """用于将十进制整数转换为十六进制字符串形式（含 0x 前缀）。
+        """
+        用于将十进制整数转换为十六进制字符串形式（含 0x 前缀）。
 
         参数：
             Dec (int): 十进制整数
@@ -96,7 +102,8 @@ class MiscUtils():
 
     @staticmethod
     def Hex_String(Hex: str) -> str:
-        """用于将形如"0a0b0c...1c1b1a"的十六进制字符串按照"2位1字符"的规则转换为字符串。
+        """
+        用于将形如"0a0b0c...1c1b1a"的十六进制字符串按照"2位1字符"的规则转换为字符串。
 
         参数：
             Hex (str): 十六进制字符串
@@ -111,7 +118,8 @@ class MiscUtils():
 
     @staticmethod
     def Hex_Binary(Hex: str) -> str:
-        """用于将形如"0a0b0c...1c1b1a"的十六进制字符串为二进制字符串形式（含 0b 前缀）。
+        """
+        用于将形如"0a0b0c...1c1b1a"的十六进制字符串为二进制字符串形式（含 0b 前缀）。
 
         参数：
             Hex (str): 十六进制字符串
@@ -124,7 +132,8 @@ class MiscUtils():
 
     @staticmethod
     def Hex_Dec(Hex: str) -> int:
-        """用于将形如"0a0b0c...1c1b1a"的十六进制字符串为十进制整数形式。
+        """
+        用于将形如"0a0b0c...1c1b1a"的十六进制字符串为十进制整数形式。
 
         参数：
             Hex (str): 十六进制字符串
@@ -137,7 +146,8 @@ class MiscUtils():
 
     @staticmethod
     def SHA1(Text: str) -> str:
-        """用于获取字符串的 SHA1 哈希值。
+        """
+        用于获取字符串的 SHA1 哈希值。
 
         参数：
             Text (str): 字符串
@@ -151,7 +161,8 @@ class MiscUtils():
 
     @staticmethod
     def SHA256(Text: str) -> str:
-        """用于获取字符串的 SHA256 哈希值。
+        """
+        用于获取字符串的 SHA256 哈希值。
 
         参数：
             Text (str): 字符串
@@ -165,7 +176,8 @@ class MiscUtils():
 
     @staticmethod
     def SHA512(Text: str) -> str:
-        """用于获取字符串的 SHA512 哈希值。
+        """
+        用于获取字符串的 SHA512 哈希值。
 
         参数：
             Text (str): 字符串
@@ -179,7 +191,8 @@ class MiscUtils():
 
     @staticmethod
     def MD5(Text: str) -> str:
-        """用于获取字符串的 MD5 哈希值。
+        """
+        用于获取字符串的 MD5 哈希值。
 
         参数：
             Text (str): 字符串
@@ -199,7 +212,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base64_Encrypt(Text: str) -> str:
-        """用于对字符串进行 Base64 编码。
+        """
+        用于对字符串进行 Base64 编码。
 
         参数：
             Text (str): 待编码的字符串
@@ -212,7 +226,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base64_Decrypt(Text: str) -> str:
-        """用于对 Base64 编码的字符串进行解码。
+        """
+        用于对 Base64 编码的字符串进行解码。
 
         参数：
             Text (str): 待解码的 Base64 编码字符串
@@ -225,7 +240,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base32_Encrypt(Text: str) -> str:
-        """用于对字符串进行 Base32 编码。
+        """
+        用于对字符串进行 Base32 编码。
 
         参数：
             Text (str): 待编码的字符串
@@ -238,7 +254,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base32_Decrypt(Text: str) -> str:
-        """用于对 Base32 编码的字符串进行解码。
+        """
+        用于对 Base32 编码的字符串进行解码。
 
         参数：
             Text (str): 待解码的 Base32 编码字符串
@@ -251,7 +268,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base16_Encrypt(Text: str) -> str:
-        """用于对字符串进行 Base16 编码。
+        """
+        用于对字符串进行 Base16 编码。
 
         参数：
             Text (str): 待编码的字符串
@@ -264,7 +282,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def Base16_Decrypt(Text: str) -> str:
-        """用于对 Base16 编码的字符串进行解码。
+        """
+        用于对 Base16 编码的字符串进行解码。
 
         参数：
             Text (str): 待解码的 Base16 编码字符串
@@ -277,7 +296,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def AES_Padding(Text: str, BlockSize: int = 16) -> bytes:
-        """用于对字符串进行 zeropadding 处理。
+        """
+        用于对字符串进行 zeropadding 处理。
 
         参数：
             Text (str): 待 padding 的字符串
@@ -293,7 +313,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def AES_Encrypt(Text: str, Key: str, BlockSize: int = 16) -> str:
-        """用于对字符串进行 AES 加密（仅支持 ECB zeropadding 模式）。
+        """
+        用于对字符串进行 AES 加密（仅支持 ECB zeropadding 模式）。
 
         参数：
             Text (str): 待进行 AES 加密的字符串
@@ -309,7 +330,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def AES_Decrypt(Text: str, Key: str, BlockSize: int = 16) -> str:
-        """用于对 AES 密文进行解密（仅支持 ECB zeropadding 模式）。
+        """
+        用于对 AES 密文进行解密（仅支持 ECB zeropadding 模式）。
 
         参数：
             Text (str): 待解密的 AES 密文（Base64 编码形式）
@@ -325,7 +347,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_Encrypt(Text: str, p: int, q: int, e: int) -> str:
-        """用于对字符串进行 RSA 加密。
+        """
+        用于对字符串进行 RSA 加密。
 
         参数：
             Text (str): 待进行 RSA 加密的字符串
@@ -343,7 +366,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_Base64_Decrypt(Base64Text: str, p: int, q: int, e: int) -> str:
-        """用于对 Base64 编码形式的 RSA 密文进行解密。
+        """
+        用于对 Base64 编码形式的 RSA 密文进行解密。
 
         参数：
             Base64Text (str): 待进行解密的 Base64 编码形式的 RSA 密文
@@ -362,7 +386,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_Long_Decrypt(Long: int, p: int, q: int, e: int) -> str:
-        """用于对长整数形式的 RSA 密文进行解密。
+        """
+        用于对长整数形式的 RSA 密文进行解密。
 
         参数：
             Long (int): 待进行解密的长整数形式的 RSA 密文
@@ -380,7 +405,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_Wiener_Attack(c: int, e: int, n: int) -> str:
-        """用于对长整数形式的 RSA 密文进行维纳攻击并解出原文。
+        """
+        用于对长整数形式的 RSA 密文进行维纳攻击并解出原文。
 
         参数：
             c (int): 待进行维纳攻击的长整数形式的 RSA 密文
@@ -391,7 +417,8 @@ class ModernCryptoUtils():
             m (str): RSA 维纳攻击后得到的原文
         """
         def continuedFra(x, y):
-            """计算连分数
+            """
+            计算连分数
 
             参数：
                 x: 分子
@@ -407,7 +434,8 @@ class ModernCryptoUtils():
             return cf
 
         def gradualFra(cf):
-            """计算连分数列表的最后的渐进分数
+            """
+            计算连分数列表的最后的渐进分数
 
             参数：
                 cf: 连分数列表
@@ -422,7 +450,8 @@ class ModernCryptoUtils():
             return numerator, denominator
 
         def solve_pq(a, b, c):
-            """使用韦达定理解出 pq (x^2−(p+q)∗x+pq=0)
+            """
+            使用韦达定理解出 pq (x^2−(p+q)∗x+pq=0)
 
             参数：
                 a: x^2的系数
@@ -436,7 +465,8 @@ class ModernCryptoUtils():
             return (-b + par) // (2 * a), (-b - par) // (2 * a)
 
         def getGradualFra(cf):
-            """计算连分数列表的所有的渐近分数
+            """
+            计算连分数列表的所有的渐近分数
 
             参数：
                 cf: 连分数列表
@@ -464,7 +494,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_MultiPrime_Attack(c: int, e: int, n: int, primes: list, powers: list = None) -> str:
-        """用于对长整数形式的 RSA 密文进行多素数攻击并解出原文。
+        """
+        用于对长整数形式的 RSA 密文进行多素数攻击并解出原文。
 
         参数：
             c (int): 待进行多素数攻击的长整数形式的 RSA 密文
@@ -490,7 +521,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_LowEncryptionIndex_Attack(c: int, e: int, n: int) -> str:
-        """用于对长整数形式的 RSA 密文进行低加密指数攻击并解出原文（尝试 10 万次累加 n 超过后会抛出异常）。
+        """
+        用于对长整数形式的 RSA 密文进行低加密指数攻击并解出原文（尝试 10 万次累加 n 超过后会抛出异常）。
 
         参数：
             c (int): 待进行低加密指数攻击的长整数形式的 RSA 密文
@@ -513,7 +545,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_CommonMod_Attack(c1: int, c2: int, e1: int, e2: int, n: int) -> str:
-        """用于对长整数形式的 RSA 密文进行共模攻击并解出原文。
+        """
+        用于对长整数形式的 RSA 密文进行共模攻击并解出原文。
 
         参数：
             c1 (int): 待进行共模攻击的长整数形式的第一串 RSA 密文
@@ -531,7 +564,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RSA_Broadcast_Attack(cs: list, e: int, ns: list) -> str:
-        """用于对长整数形式的 RSA 密文列表进行广播攻击并解出原文。
+        """
+        用于对长整数形式的 RSA 密文列表进行广播攻击并解出原文。
 
         参数：
             cs (List[int]): 待进行广播攻击的长整数形式的 RSA 密文列表
@@ -555,7 +589,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RC4_Encrypt(Text: str, Key: str) -> str:
-        """用于对字符串进行 RC4 加密。
+        """
+        用于对字符串进行 RC4 加密。
 
         参数：
             Text (str): 待进行 RC4 加密的字符串
@@ -571,7 +606,8 @@ class ModernCryptoUtils():
 
     @staticmethod
     def RC4_Decrypt(Text: str, Key: str) -> str:
-        """用于对 Base64 编码形式的 RC4 密文进行解密。
+        """
+        用于对 Base64 编码形式的 RC4 密文进行解密。
 
         参数：
             Text (str): 待解密的 Base64 编码形式的 RC4 密文
@@ -593,7 +629,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Caesar_Encrypt(Text: str, Move: int = 3) -> str:
-        """用于对字符串进行 Caesar 加密。
+        """
+        用于对字符串进行 Caesar 加密。
 
         参数：
             Text (str): 待进行 Caesar 加密的字符串
@@ -614,7 +651,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Caesar_Decrypt(Text: str, Move: int = 3) -> str:
-        """用于对 Caesar 密文进行解密。
+        """
+        用于对 Caesar 密文进行解密。
 
         参数：
             Text (str): 待进行解密的 Caesar 密文
@@ -635,7 +673,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Caesar_Attack(Text: str) -> list:
-        """用于对 Caesar 密文进行爆破攻击。
+        """
+        用于对 Caesar 密文进行爆破攻击。
 
         参数：
             Text (str): 待进行爆破攻击的 Caesar 密文
@@ -648,7 +687,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Morse_Encrypt(Text: str) -> str:
-        """用于对字符串进行 Morse 加密。
+        """
+        用于对字符串进行 Morse 加密。
 
         参数：
             Text (str): 待进行 Morse 加密的字符串
@@ -676,7 +716,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Morse_Decrypt(Text: str) -> str:
-        """用于对 Morse 密文进行解密。
+        """
+        用于对 Morse 密文进行解密。
 
         参数：
             Text (str): 待进行解密的 Morse 密文（以'/'进行分隔）
@@ -700,7 +741,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Bacon_Encrypt(Text: str) -> str:
-        """用于对字符串进行 Bacon 加密。
+        """
+        用于对字符串进行 Bacon 加密。
 
         参数：
             Text (str): 待进行 Bacon 加密的字符串
@@ -719,7 +761,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Bacon_Decrypt(Text: str) -> str:
-        """用于对 Bacon 密文进行解密。
+        """
+        用于对 Bacon 密文进行解密。
 
         参数：
             Text (str): 待进行解密的 Bacon 密文
@@ -741,7 +784,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Fence_Encrypt(Text: str, Fence: int) -> str:
-        """用于对字符串进行 Fence 加密。
+        """
+        用于对字符串进行 Fence 加密。
 
         参数：
             Text (str): 待进行 Fence 加密的字符串
@@ -764,7 +808,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Fence_Decrypt(Text: str, Fence: int) -> str:
-        """用于对 Fence 密文进行解密。
+        """
+        用于对 Fence 密文进行解密。
 
         参数：
             Text (str): 待进行解密的 Fence 密文
@@ -785,7 +830,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def Fence_Attack(Text: str) -> list:
-        """用于对 Fence 密文进行爆破攻击。
+        """
+        用于对 Fence 密文进行爆破攻击。
 
         参数：
             Text (str): 待进行爆破攻击的 Fence 密文
@@ -799,7 +845,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def WFence_Generate(Text: str, Fence: int) -> list:
-        """用于生成 WFence 矩阵以便后续处理。
+        """
+        用于生成 WFence 矩阵以便后续处理。
 
         参数：
             Text (str): 待进行 WFence 处理的字符串
@@ -825,7 +872,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def WFence_Encrypt(Text: str, Fence: int) -> str:
-        """用于对字符串进行 WFence 加密。
+        """
+        用于对字符串进行 WFence 加密。
 
         参数：
             Text (str): 待进行 WFence 加密的字符串
@@ -844,7 +892,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def WFence_Decrypt(Text: str, Fence: int) -> str:
-        """用于对 WFence 密文进行解密。
+        """
+        用于对 WFence 密文进行解密。
 
         参数：
             Text (str): 待进行解密的 WFence 密文
@@ -869,7 +918,8 @@ class ClassicalCryptoUtils():
 
     @staticmethod
     def WFence_Attack(Text: str) -> list:
-        """用于对 WFence 密文进行爆破攻击。
+        """
+        用于对 WFence 密文进行爆破攻击。
 
         参数：
             Text (str): 待进行爆破攻击的 WFence 密文

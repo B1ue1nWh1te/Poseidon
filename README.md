@@ -19,11 +19,13 @@
 
 1. **本工具仅可用于 CTF 比赛解题，请勿在任何其他场景下使用。**
 
-2. 在使用 `Blockchain` 模块时，你始终应该使用全新生成的账户，而不是导入常用的具有实际价值的账户，以确保你的账户安全。
+2. 请尽可能使用最新版本解题。
 
-3. `Blockchain` 模块的所有功能在`Goerli`测试网络中均正常通过检验。
+3. 在使用 `Blockchain` 模块时，你始终应该使用全新生成的账户，而不是导入常用的具有实际价值的账户，以确保你的账户安全。
 
-4. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
+4. `Blockchain` 模块的所有功能在`Goerli`测试网络中均正常通过检验。
+
+5. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
 
 # 安装
 
@@ -51,22 +53,22 @@ from Poseidon.Blockchain import *
 
 ### Chain 类
 
-Chain 对象是进行链上交互的基础。
+Chain 是区块链实例，作为链上交互的基础。
 
 `Chain(RPCUrl: str, RequestParams: dict = None)`：
 
 ```
-Chain 对象初始化函数。（当连接失败时会抛出异常）
+初始化。当连接失败时会抛出异常。
 
 参数：
-	RPCUrl (str): 要连接的链的 RPC 地址
+	RPCUrl (str): 链 RPC 地址
 	RequestParams (可选)(dict): 指定连接时使用的 request 参数，默认为 None。
-	例如需要使用代理进行访问，则传入 {"proxies": {"http": "http://127.0.0.1:<ProxyPort>","https": "http://127.0.0.1:<ProxyPort>"}}
+	例如当需要使用代理进行访问时，则传入 RequestParams={"proxies": {"http": "http://127.0.0.1:<ProxyPort>","https": "http://127.0.0.1:<ProxyPort>"}}
 
 成员变量：
-	Net (Web3.HTTPProvider): web3py 实例化的链交互器对象
+	Net (Web3.HTTPProvider): web3.py 原生的链交互器对象
 	ChainId (int): 链 ID
-	ClientVersion (str): 所连接的 RPC 的 geth 等客户端软件的版本号
+	ClientVersion (str): 链 RPC 的客户端软件版本号
 ```
 
 <br>
@@ -74,26 +76,42 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 `GetBasicInformation() -> dict`：
 
 ```
-获取链的基本信息。包括链 ID 、区块高度、当前 GasPrice(Gwei) 、所连接的 RPC 的 geth 等客户端软件的版本号。
+获取链的基本信息。包括链 ID 、区块高度、 GasPrice 、出块间隔、链 RPC 的客户端软件版本号。
 
 返回值：
 	BasicInformation (dict): 链的基本信息构成的字典。
-	{"ChainId"|"BlockNumber"|"GasPrice"|"ClientVersion"}
+	{"ChainId"|"BlockNumber"|"GasPrice"|"Timeslot"|"ClientVersion"}
 ```
 
 <br>
 
-`GetTransactionInformationByHash(TransactionHash: str) -> dict`：
+`GetTransactionInformationByHash(self, TransactionHash: str) -> dict`：
 
 ```
-根据交易哈希获取交易数据。包括交易类型（Traditional|EIP-1559）、交易所在区块号、发送者、接收者、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas)(Gwei))、GasLimit、Nonce、Value、InputData。
+根据交易哈希获取交易信息。包括交易哈希、所在区块号、交易索引号、交易状态、交易类型、交易行为、发送者、接收者、(部署的合约地址)、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas))、GasLimit、GasUsed、Nonce、Value、Logs、InputData。
 
 参数：
-	TransactionHash (str): 要查询的交易的哈希
+	TransactionHash (str): 要查询的交易哈希
 
 返回值：
-	TransactionInformation (dict): 交易数据构成的字典（当出现异常时返回 None）
-	{"TransactionHash"|"TransactionType"|"BlockNumber"|"From"|"To"|("GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas"))|"GasLimit"|"Nonce"|"Value"|"InputData"}
+	TransactionInformation (dict): 交易信息构成的字典。当出现异常时返回 None 。
+	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"Logs"|"InputData"}
+```
+
+<br>
+
+`GetTransactionInformationByBlockIdAndIndex(self, BlockID, TransactionIndex: int) -> dict`：
+
+```
+根据区块 ID 和交易在块中的索引来获取交易信息。包括交易哈希、所在区块号、交易索引号、交易状态、交易类型、交易行为、发送者、接收者、(部署的合约地址)、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas))、GasLimit、GasUsed、Nonce、Value、Logs、InputData。
+
+参数：
+	BlockID (str|int): 区块 ID 。可为区块号或 'latest', 'earliest', 'pending' 。
+	TransactionIndex (int): 交易在块中的索引
+
+返回值：
+	TransactionInformation (dict): 交易信息构成的字典。当出现异常时返回 None 。
+	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"Logs"|"InputData"}
 ```
 
 <br>
@@ -101,13 +119,13 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 `GetBalance(Address: str) -> int`：
 
 ```
-根据账户地址获取其主币余额。
+根据账户地址获取其网络原生代币余额。
 
 参数：
 	Address (str): 账户地址
 
 返回值：
-	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
+	Balance (int): 账户网络原生代币余额。单位为 wei ，当出现异常时返回 None 。
 ```
 
 <br>
@@ -115,13 +133,13 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 `GetCode(Address: str) -> str`：
 
 ```
-根据合约地址获取其字节码。
+根据合约地址获取其已部署字节码。
 
 参数：
 	Address (str): 合约地址
 
 返回值：
-	Code (str): 合约字节码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+	Code (str): 合约已部署字节码。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
 ```
 
 <br>
@@ -133,10 +151,10 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 
 参数：
 	Address (str): 合约地址
-	Index (int): 存储插槽索引
+	SlotIndex (int): 存储插槽索引
 
 返回值：
-	Data (str): 存储值（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+	Data (str): 存储值。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
 ```
 
 <br>
@@ -144,14 +162,14 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 `DumpStorage(Address: str, Count: int) -> list`：
 
 ```
-根据合约地址和数量批量遍历存储插槽并获取值（从插槽 0 开始）。
+根据合约地址和指定插槽数量值，从插槽 0 开始批量遍历存储插槽并获取值。
 
 参数：
 	Address (str): 合约地址
-	Count (int): 要获取的数量
+	Count (int): 指定插槽数量值
 
 返回值：
-	Data (List[str]): 存储值列表（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+	Data (List[str]): 存储值列表。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
 ```
 
 <br>
@@ -159,32 +177,32 @@ Chain 对象初始化函数。（当连接失败时会抛出异常）
 `GetPublicKeyByTransactionHash(TransactionHash: str) -> tuple`：
 
 ```
-通过一笔已在链上确认的交易的哈希，获取账户的公钥。
+通过一笔已在链上确认的交易哈希，获取账户公钥。
 
 参数：
 	TransactionHash (str): 交易哈希
 
 返回值：
-	(Address, PublicKey) (tuple): 由账户地址和账户公钥组成的元组（当出现异常时返回 None ）
+	(Address, PublicKey) (tuple): 由账户地址和账户公钥组成的元组。当出现异常时返回 None 。
 ```
 
 <br>
 
 ### Account 类
 
-Account 对象是发起链上调用的基础。
+Account 是账户实例，作为发起链上调用的基础。
 
 `Account(Chain: Chain, PrivateKey: str)`：
 
 ```
-通过私钥导入账户并与 Chain 对象绑定，后续的所有链上调用都会发送至 Chain 所表示的链上。（当导入失败时将会抛出异常）
+初始化。通过私钥导入账户并与 Chain 实例绑定，后续的所有链上调用都会作用在 Chain 实例化表示的链上。当导入账户失败时将会抛出异常。
 
 参数：
-	Chain (Poseidon.Blockchain.Chain): 链对象
-	PrivateKey (str): 账户私钥（十六进制形式 不含 0x 前缀）
+	Chain (Poseidon.Blockchain.Chain): 区块链实例
+	PrivateKey (str): 账户私钥。不含 0x 前缀的十六进制形式。
 
 成员变量：
-	Chain (Poseidon.Blockchain.Chain): 链对象
+	Chain (Poseidon.Blockchain.Chain): 区块链实例
 	Address (str): 账户地址
 	PrivateKey (str): 账户私钥
 ```
@@ -194,27 +212,27 @@ Account 对象是发起链上调用的基础。
 `GetSelfBalance() -> int`：
 
 ```
-获取自身账户的主币余额。（当余额为 0 时会输出无法发送交易的警告）
+获取自身账户的网络原生代币余额。当余额为 0 时会触发无法发送交易的警告。
 
 返回值：
-	Balance (int): 账户主币余额（单位为wei 当出现异常时返回 None ）
+	Balance (int): 自身账户网络原生代币余额。单位为 wei ，当出现异常时返回 None 。
 ```
 
 <br>
 
-`Transfer(To: str, Amount: int, Data: str = "0x") -> dict`：
+`Transfer(self, To: str, Value: int, GasLimit: int = 100000, Data: str = "0x") -> dict`：
 
 ```
-向指定账户转账指定数量的主币，可附带信息。（GasLimit 为 100000，若 90 秒内交易未确认则作超时处理）
+向指定账户转账指定数量的网络原生代币，可附带信息。若 90 秒内交易未确认则作超时处理。
 
 参数：
 	To (str): 接收方地址
-	Value (int): 发送的主币数量（单位为 wei ）
-	Data (可选)(str): 交易数据（十六进制形式 含 0x 前缀），默认值为 "0x"
+	Value (int): 发送的网络原生代币数量。单位为 wei 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 100000 wei 。
+	Data (可选)(str): 交易数据。含 0x 前缀的十六进制形式，默认值为 "0x" 。
 
 返回值：
-	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -222,17 +240,16 @@ Account 对象是发起链上调用的基础。
 `SendTransaction(To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict`：
 
 ```
-发送一笔自定义交易（传统方式）。（若 90 秒内交易未确认则作超时处理）
+以传统方式发送一笔自定义交易。若 90 秒内交易未确认则作超时处理。
 
 参数：
-	To (str): 交易接收方地址
-	Data (str): 交易数据（十六进制形式 含 0x 前缀）
-	Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
-	GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 1000000 wei
+	To (str): 接收方地址
+	Data (str): 交易数据。含 0x 前缀的十六进制形式。
+	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -240,17 +257,16 @@ Account 对象是发起链上调用的基础。
 `SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict`：
 
 ```
-发送一笔自定义交易（EIP-1559方式）。（若 90 秒内交易未确认则作超时处理）
+以 EIP-1559 方式发送一笔自定义交易。若 90 秒内交易未确认则作超时处理。
 
 参数：
-	To (str): 交易接收方地址
-	Data (str): 交易数据（十六进制形式 含 0x 前缀）
-	Value (可选)(int): 随交易发送的主币数量（单位为 wei ），默认为 0 wei
-	GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 1000000 wei
+	To (str): 接收方地址
+	Data (str): 交易数据。含 0x 前缀的十六进制形式。
+	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -258,17 +274,17 @@ Account 对象是发起链上调用的基础。
 `DeployContract(ABI: dict, Bytecode: str, Value: int = 0, *Arguments) -> dict`：
 
 ```
-部署合约（若 90 秒内交易未确认则作超时处理）。
+部署合约。若 90 秒内交易未确认则作超时处理。
 
 参数：
 	ABI (dict): 合约 ABI
-	Bytecode (str): 合约字节码（十六进制形式 含 0x 前缀）
-	Value (可选)(int): 随交易发送给合约的主币数量（单位为 wei ），默认为 0 wei
-	*Arguments (可选)(any): 传给合约构造函数的参数，默认为空
+	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
+	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	*Arguments (可选)(any): 传给合约构造函数的参数，默认为空。
 
 返回值：
-	TransactionInformation (dict): 交易回执信息构成的字典（其中"Contract"为已实例化的 Contract 对象 当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"|"Contract"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	当合约部署成功时，字典中会额外添加"Contract"字段，该变量是已实例化的 Contract 对象，失败时为 None。
 ```
 
 <br>
@@ -276,16 +292,15 @@ Account 对象是发起链上调用的基础。
 `DeployContractWithoutABI(Bytecode: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
 
 ```
-在没有 ABI 的情况下，仅使用字节码来部署合约。（若 90 秒内交易未确认则作超时处理）
+在没有 ABI 的情况下，仅使用字节码来部署合约。若 90 秒内交易未确认则作超时处理。
 
 参数：
-	Bytecode (str): 合约字节码（十六进制形式 含 0x 前缀）
-	Value (可选)(int): 随交易发送给合约的主币数量（单位为 wei ），默认为 0 wei
-	GasLimit (可选)(int): Gas最大使用量（单位为 wei ），默认为 10000000 wei
+	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
+	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 10000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"ContractAddress"|"Value"|"GasUsed"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -293,13 +308,13 @@ Account 对象是发起链上调用的基础。
 `SignMessage(Message: str) -> dict`：
 
 ```
-对消息字符串进行签名。
+消息字符串进行签名。
 
 参数：
 	Message (str): 待签名消息字符串
 
 返回值：
-	SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）
+	SignatureData (str): 签名数据构成的字典。当出现异常时返回 None 。
 	{"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
 ```
 
@@ -314,7 +329,7 @@ Account 对象是发起链上调用的基础。
 	MessageHash (str): 待签名消息哈希
 
 返回值：
-	SignatureData (str): 签名数据构成的字典（当出现异常时返回 None ）
+	SignatureData (str): 签名数据构成的字典。当出现异常时返回 None 。
 	{"Address"|"MessageHash"|"Signature"|"R"|"S"|"V"}
 ```
 
@@ -322,22 +337,22 @@ Account 对象是发起链上调用的基础。
 
 ### Contract 类
 
-Contract 对象是与指定合约进行交互的基础。
+Contract 是合约实例，作为与指定合约进行交互的基础。
 
 `Contract(Account: Account, Address: str, ABI: dict)`：
 
 ```
-通过合约地址与 ABI 实例化合约对象，并与 Account 对象绑定，后续的所有对该合约的调用都会由这一账户发起。（当实例化失败时会抛出异常）
+初始化。通过合约地址与 ABI 来实例化合约，并与 Account 绑定，后续所有对该合约的调用都会由这一账户发起。当实例化失败时会抛出异常。
 
 参数：
-    Account (Poseidon.Blockchain.Account): 账户对象
-    Address (str): 合约地址
-    ABI (str): 合约 ABI
+	Account (Poseidon.Blockchain.Account): 账户实例
+	Address (str): 合约地址
+	ABI (str): 合约 ABI
 
 成员变量：
-    Account (Poseidon.Blockchain.Account): 账户对象
-    Address (str): 合约地址
-    Instance (Web3.eth.Contract): web3py 原生 contract 对象实例
+	Account (Poseidon.Blockchain.Account): 账户实例
+	Address (str): 合约地址
+	Instance (Web3.eth.Contract): web3.py 原生 contract 对象实例
 ```
 
 <br>
@@ -349,11 +364,10 @@ Contract 对象是与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (可选)(any): 函数参数，默认为空
+	*FunctionArguments (可选)(any): 函数参数，默认为空。
 
 返回值：
-	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -361,17 +375,16 @@ Contract 对象是与指定合约进行交互的基础。
 `CallFunctionWithValueAndGasLimit(Value: int, GasLimit: int, FunctionName: str, *FunctionArguments) -> dict`：
 
 ```
-通过传入函数名及参数来调用该合约内的函数（支持自定义 Value 和 GasLimit）。
+通过传入函数名及参数来调用该合约内的函数。支持自定义 Value 和 GasLimit 。
 
 参数：
-	Value (int): 随交易发送的主币数量（单位为 wei ）
-	GasLimit (int): 该交易最多可消耗的 Gas 量（单位为 wei ）
+	Value (int): 随交易发送的网络原生代币数量。单位为 wei 。
+	GasLimit (int): Gas 最大使用量。单位为 wei 。
 	FunctionName (str): 函数名称
-	*FunctionArguments (可选)(any): 函数参数，默认为空
+	*FunctionArguments (可选)(any): 函数参数，默认为空。
 
 返回值：
-	TransactionResult (dict): 交易回执信息构成的字典（当交易失败时返回{"Status"|"TransactionHash"} 当出现异常时返回 None ）
-	{"Status"|"TransactionHash"|"BlockNumber"|"From"|"To"|"Value"|"GasUsed"|"Data"|"Logs"}
+	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -383,10 +396,10 @@ Contract 对象是与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (可选)(any): 函数参数，默认为空
+	*FunctionArguments (可选)(any): 函数参数，默认为空。
 
 返回值：
-	Result (any): 调用函数后得到的返回值（当出现异常时返回 None ）
+	Result (any): 调用函数后得到的返回值。当出现异常时返回 None 。
 ```
 
 <br>
@@ -398,10 +411,10 @@ Contract 对象是与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (可选)(any): 函数参数，默认为空
+	*FunctionArguments (可选)(any): 函数参数，默认为空。
 
 返回值：
-	CallData (str): 调用数据编码（十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+	CallData (str): 调用数据编码。含 0x 前缀的十六进制形式。当出现异常时返回 None 。
 ```
 
 <br>
@@ -413,7 +426,7 @@ Contract 对象是与指定合约进行交互的基础。
 `SwitchSolidityVersion(SolidityVersion: str)`：
 
 ```
-设置当前使用的 Solidity 版本，若该版本文件未安装则会自动安装。（当设置版本失败时会抛出异常）
+设置当前使用的 Solidity 版本，若该版本未安装则会自动安装。当设置版本失败时会抛出异常。
 
 参数：
 	SolidityVersion (str): Solidity 版本号
@@ -424,14 +437,14 @@ Contract 对象是与指定合约进行交互的基础。
 `Compile(FileCourse: str, ContractName: str, SolidityVersion: str = None, AllowPaths: str = None, Optimize: bool = False) -> tuple`：
 
 ```
-根据给定的参数使用 py-solc-x 编译合约。（当编译失败时会抛出异常）
+根据给定的参数使用 py-solc-x 编译合约。当编译失败时会抛出异常。
 
 参数：
-	FileCourse (str): 合约文件完整路径（当合约文件与脚本文件在同一目录下时可直接使用文件名）
+	FileCourse (str): 合约文件完整路径。当合约文件与脚本文件在同一目录下时可直接使用文件名。
 	ContractName (str): 要编译的合约名称
-	SolidityVersion (可选)(str): 指定使用的 Solidity 版本（若不指定则会使用当前已激活的 Solidity 版本进行编译），默认为 None
-	AllowPaths (可选)(str): 指定路径白名单（在编译时可能会出现 AllowPaths 相关错误，可在这里解决），默认为 None
-	Optimize (可选)(str): 是否开启优化器，False 为关闭，True 为开启，默认为 False
+	SolidityVersion (可选)(str): 指定使用的 Solidity 版本。若不指定则会使用当前已激活的 Solidity 版本进行编译。默认为 None 。
+	AllowPaths (可选)(str): 指定许可路径。在编译时可能会出现 AllowPaths 相关错误可在这里解决。默认为 None 。
+	Optimize (可选)(str): 是否开启优化器。默认为 False 。
 
 返回值：
 	(ABI, Bytecode) (tuple): 由 ABI 和 Bytecode 组成的元组
@@ -445,7 +458,7 @@ Contract 对象是与指定合约进行交互的基础。
 创建新账户。
 
 返回值：
-	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组
+(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组
 ```
 
 <br>
@@ -453,13 +466,13 @@ Contract 对象是与指定合约进行交互的基础。
 `MnemonicToAddressAndPrivateKey(Mnemonic: str) -> tuple`：
 
 ```
-将助记词转换为账户地址与私钥（参考 BIP-39 标准）。
+将助记词转换为账户地址与私钥。参考 BIP-39 标准。
 
 参数：
-    Mnemonic (str): 助记词以空格进行分隔而组成的字符串
+	Mnemonic (str): 助记词字符串。以空格进行分隔。
 
 返回值：
-    (Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组（当出现异常时返回 None ）
+	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组。当出现异常时返回 None 。
 ```
 
 <br>
@@ -474,7 +487,7 @@ Contract 对象是与指定合约进行交互的基础。
 	Signature (str): 签名
 
 返回值：
-	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
+	Signer (str): 签署者的账户地址。当出现异常时返回 None 。
 ```
 
 <br>
@@ -489,7 +502,7 @@ Contract 对象是与指定合约进行交互的基础。
 	Signature (str): 签名
 
 返回值：
-	Signer (str): 签署者的账户地址（当出现异常时返回 None ）
+	Signer (str): 签署者的账户地址。当出现异常时返回 None 。
 ```
 
 <br>
@@ -497,29 +510,29 @@ Contract 对象是与指定合约进行交互的基础。
 `RecoverRawTransaction(RawTransactionData: str) -> str`：
 
 ```
-用于获取签署此交易的账户的地址。
+获取签署此交易的账户地址。
 
 参数：
-	RawTransactionData (str): 原生交易数据（十六进制形式 含 0x 前缀）
+	RawTransactionData (str): 原生交易数据。含 0x 前缀的十六进制形式。
 
 返回值：
-	Address (str): 账户地址（当出现异常时返回 None ）
+	Address (str): 账户地址。当出现异常时返回 None 。
 ```
 
 <br>
 
-`CrackSelector(TargetFunctionName: str, TargetFunctionParameters: list, GenerateFunctionParameters: list) -> str`：
+`CrackSelector(SourceFunctionName: str, SourceFunctionParameters: list, ToGenerateFunctionParameters: list) -> str`：
 
 ```
-根据目标函数名与参数以及要生成的函数的参数，爆破出一个函数名，以使得这两个函数的 Selector 相等。（现在还是单线程，非常非常慢，之后有时间了再进行优化）
+根据源函数名、参数与想要碰撞生成的函数的参数，碰撞生成出一个函数名，以使得这两个函数的选择器签名相等。
 
 参数：
-    TargetFunctionName (str): 目标函数名
-    TargetFunctionParameters (List[str]): 目标函数参数列表
-    GenerateFunctionParameters (List[str]): 要生成的函数的参数列表
+	SourceFunctionName (str): 目标函数名
+	SourceFunctionParameters (List[str]): 目标函数参数列表
+	ToGenerateFunctionParameters (List[str]): 想要碰撞生成的函数的参数列表
 
 返回值：
-    GenerateFunction (str): 爆破出的函数的完整表示（当出现异常时返回 None ）
+	ToGenerateFunction (str): 碰撞出的函数的名称与参数完整表示。当出现异常时返回 None 。
 ```
 
 <br>
@@ -530,10 +543,10 @@ Contract 对象是与指定合约进行交互的基础。
 将 EVM Assembly 转为 EVM Bytecode 。
 
 参数：
-	Assembly (str): EVM Assembly 字符串
+	Assembly (str): EVM Assembly
 
 返回值：
-	Bytecode (str): EVM Bytecode （十六进制形式 含 0x 前缀 当出现异常时返回 None ）
+	Bytecode (str): EVM Bytecode 。含 0x 前缀的六进制形式。当出现异常时返回 None 。
 ```
 
 <br>
@@ -544,10 +557,42 @@ Contract 对象是与指定合约进行交互的基础。
 将 EVM Bytecode 转为 EVM Assembly 。
 
 参数：
-	Bytecode (str): EVM Bytecode 字符串（十六进制形式 含 0x 前缀）
+	Bytecode (str): EVM Bytecode 。含 0x 前缀的十六进制形式。
 
 返回值：
-	Assembly (str): EVM Assembly （当出现异常时返回 None ）
+	Assembly (str): EVM Assembly 。当出现异常时返回 None 。
+```
+
+<br>
+
+`SignatureToRSV(Signature: str) -> dict`：
+
+```
+将签名解析成 R S V 。
+
+参数：
+	Signature (str): 签名。含 0x 前缀的十六进制形式。
+
+返回值：
+	Result (dict): 解析结果。当出现异常时返回 None 。
+	{"Signature"|"R"|"S"|"V"}
+```
+
+<br>
+
+`RSVToSignature(R: str, S: str, V: str) -> dict`：
+
+```
+将 R S V 合并成签名。
+
+参数：
+	R (str): 签名 r 值。含 0x 前缀的十六进制形式。
+	S (str): 签名 s 值。含 0x 前缀的十六进制形式。
+	V (str): 签名 v 值。含 0x 前缀的十六进制形式。
+
+返回值：
+	Result (dict): 合并结果。当出现异常时返回 None 。
+	{"R"|"S"|"V"|"Signature"}
 ```
 
 <br>
