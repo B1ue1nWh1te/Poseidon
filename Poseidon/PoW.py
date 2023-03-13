@@ -28,6 +28,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(HashBegin)
         Hash = Connection.recvuntil(HashEnd, drop=True).decode().strip()
@@ -53,6 +54,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(PrefixBegin)
         Prefix = Connection.recvuntil(PrefixEnd, drop=True).decode().strip()
@@ -78,6 +80,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(KnownBegin)
         Known = Connection.recvuntil(KnownEnd, drop=True).decode().strip()
@@ -102,6 +105,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(HashBegin)
         Hash = Connection.recvuntil(HashEnd, drop=True).decode().strip()
@@ -127,6 +131,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(PrefixBegin)
         Prefix = Connection.recvuntil(PrefixEnd, drop=True).decode().strip()
@@ -152,6 +157,7 @@ class PoWUtils():
         返回值：
             Connection (pwn.remote): 与服务器建立的连接对象
         """
+
         Connection = remote(Url, Port)
         Connection.recvuntil(KnownBegin)
         Known = Connection.recvuntil(KnownEnd, drop=True).decode().strip()

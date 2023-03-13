@@ -9,7 +9,7 @@ def long_description():
 
 setup(
     name="poseidon-python",
-    version="1.0.7",
+    version="1.1.0",
     author="B1ue1nWh1te",
     author_email="b1ue1nwh1te@skiff.com",
     description="海神波塞冬工具对常用的链上交互操作进行了封装，使得开发者能够便捷地与任何以太坊同构链交互，主要用于在CTF比赛中攻克Blockchain方向的题目。",
