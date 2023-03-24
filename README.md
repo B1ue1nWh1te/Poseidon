@@ -61,7 +61,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 
 参数：
 	RPCUrl (str): 节点 RPC 地址
-	RequestParams (Optional[dict]): 连接时使用的 request 参数，默认为 None。
+	RequestParams (可选)(Optional[dict]): 连接时使用的 request 参数，默认为 None。
 	例如当需要使用代理进行访问时，则传入 RequestParams={"proxies": {"http": "http://localhost:<ProxyPort>","https": "http://localhost:<ProxyPort>"}}
 
 成员变量：
@@ -221,6 +221,17 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
+`Account.RequestAuthorizationBeforeSendTransaction(Open: bool = True)`：
+
+```
+设置在通过该账户发送每一笔交易之前是否请求授权。开启后会在每笔交易即将发送前暂停流程，在终端询问是否发送该笔交易。在实例化 Account 对象时默认设置为 False 。
+
+参数：
+	Open (bool): 请求授权开关。函数定义的默认值为 True ，但在实例化 Account 对象时默认设置为 False 。
+```
+
+<br>
+
 `Account.GetSelfBalance() -> int`：
 
 ```
@@ -232,16 +243,17 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.Transfer(To: str, Value: int, GasLimit: int = 100000, Data: str = "0x") -> dict`：
+`Account.Transfer(To: str, Value: int, Data: str = "0x", GasPrice: Optional[int] = None, GasLimit: int = 100000) -> dict`：
 
 ```
-向指定账户转账指定数量的网络原生代币，可附带信息。若 90 秒内交易未确认则作超时处理。
+向指定账户转账指定数量的网络原生代币，可附带信息。若 120 秒内交易未确认则作超时处理。
 
 参数：
 	To (str): 接收方地址
 	Value (int): 发送的网络原生代币数量。单位为 wei 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 100000 wei 。
 	Data (可选)(str): 交易数据。含 0x 前缀的十六进制形式，默认值为 "0x" 。
+	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 100000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -249,15 +261,16 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.SendTransaction(self, To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict`：
+`Account.SendTransaction(To: str, Data: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 1000000) -> dict`：
 
 ```
-以传统方式发送一笔自定义交易。若 90 秒内交易未确认则作超时处理。
+以传统方式发送一笔自定义交易。若 120 秒内交易未确认则作超时处理。
 
 参数：
 	To (str): 接收方地址
 	Data (str): 交易数据。含 0x 前缀的十六进制形式。
 	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
 	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
 
 返回值：
@@ -266,15 +279,17 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.SendTransactionByEIP1559(self, To: str, Data: str, Value: int = 0, GasLimit: int = 1000000) -> dict`：
+`Account.SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, BaseFee: Optional[int] = None, MaxPriorityFee: Optional[int] = None, GasLimit: int = 1000000) -> dict`：
 
 ```
-以 EIP-1559 方式发送一笔自定义交易。若 90 秒内交易未确认则作超时处理。
+以 EIP-1559 方式发送一笔自定义交易。若 120 秒内交易未确认则作超时处理。
 
 参数：
 	To (str): 接收方地址
 	Data (str): 交易数据。含 0x 前缀的十六进制形式。
 	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
+	BaseFee (可选)(Optional[int]): BaseFee 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	MaxPriorityFee (可选)(Optional[int]): MaxPriorityFee 价格。单位为 wei ，默认使用 RPC 建议的 max_priority_fee 。
 	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
 
 返回值：
@@ -283,16 +298,17 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.DeployContract(self, ABI: dict, Bytecode: str, Value: int = 0, *Arguments: Optional[Any]) -> dict`：
+`Account.DeployContract(ABI: dict, Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, *Arguments: Optional[Any]) -> dict`：
 
 ```
-部署合约。若 90 秒内交易未确认则作超时处理。
+部署合约。若 120 秒内交易未确认则作超时处理。
 
 参数：
 	ABI (dict): 合约 ABI
 	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
 	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	*Arguments (Optional[Any]): 传给合约构造函数的参数，默认为空。
+	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	*Arguments (可选)(Optional[Any]): 传给合约构造函数的参数，默认为空。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -301,15 +317,16 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.DeployContractWithoutABI(self, Bytecode: str, Value: int = 0, GasLimit: int = 10000000) -> dict`：
+`Account.DeployContractWithoutABI(Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 5000000) -> dict`：
 
 ```
-在没有 ABI 的情况下，仅使用字节码来部署合约。若 90 秒内交易未确认则作超时处理。
+在没有 ABI 的情况下，仅使用字节码来部署合约。若 120 秒内交易未确认则作超时处理。
 
 参数：
 	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
 	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 10000000 wei 。
+	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 5000000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -375,7 +392,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
+	*FunctionArguments (可选)(Optional[Any]): 函数参数，默认为空。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -383,13 +400,14 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`Contract.CallFunctionWithValueAndGasLimit(Value: int, GasLimit: int, FunctionName: str, *FunctionArguments: Optional[Any]) -> dict`：
+`Contract.CallFunctionWithParameters(Value: int, GasPrice: Optional[int], GasLimit: int, FunctionName: str, *FunctionArguments: Optional[Any]) -> dict`：
 
 ```
 通过传入函数名及参数来调用该合约内的函数。支持自定义 Value 和 GasLimit 。
 
 参数：
 	Value (int): 随交易发送的网络原生代币数量。单位为 wei 。
+	GasPrice (Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
 	GasLimit (int): Gas 最大使用量。单位为 wei 。
 	FunctionName (str): 函数名称
 	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
@@ -407,7 +425,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
+	*FunctionArguments (可选)(Optional[Any]): 函数参数，默认为空。
 
 返回值：
 	Result (Any): 调用函数后得到的返回值。当出现异常时返回 None 。
@@ -422,7 +440,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 参数：
 	FunctionName (str): 函数名称
-	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
+	*FunctionArguments (可选)(Optional[Any]): 函数参数，默认为空。
 
 返回值：
 	CallData (str): 调用数据编码。含 0x 前缀的十六进制形式。当出现异常时返回 None 。
@@ -445,7 +463,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`BlockchainUtils.Compile(FileCourse: str, ContractName: str, SolidityVersion: Optional[str] = None, AllowPaths: Optional[str] = None, Optimize: Optional[bool] = False) -> tuple`：
+`BlockchainUtils.Compile(FileCourse: str, ContractName: str, SolidityVersion: Optional[str] = None, AllowPaths: Optional[str] = None, Optimize: bool = False) -> tuple`：
 
 ```
 根据给定的参数使用 py-solc-x 编译合约。当编译失败时会抛出异常。
@@ -453,9 +471,9 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 参数：
 	FileCourse (str): 合约文件完整路径。当合约文件与脚本文件在同一目录下时可直接使用文件名。
 	ContractName (str): 要编译的合约名称
-	SolidityVersion (Optional[str]): 指定使用的 Solidity 版本。若不指定则会使用当前已激活的 Solidity 版本进行编译。默认为 None 。
-	AllowPaths (Optional[str]): 指定许可路径。在编译时可能会出现 AllowPaths 相关错误可在这里解决。默认为 None 。
-	Optimize (Optional[bool]): 是否开启优化器。默认为 False 。
+	SolidityVersion (可选)(Optional[str]): 指定使用的 Solidity 版本。若不指定则会使用当前已激活的 Solidity 版本进行编译。默认为 None 。
+	AllowPaths (可选)(Optional[str]): 指定许可路径。在编译时可能会出现 AllowPaths 相关错误可在这里解决。默认为 None 。
+	Optimize (可选)(bool): 是否开启优化器。默认为 False 。
 
 返回值：
 	(ABI, Bytecode) (tuple): 由 ABI 和 Bytecode 组成的元组
@@ -484,6 +502,95 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 返回值：
 	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.GweiToWei(Value: Union[int, float]) -> int`：
+
+```
+将一个正整数或浮点数按照 Gwei 为单位直接转化为 wei 为单位的正整数。即假设传入 Value = 1，将返回 1000000000 。
+
+参数：
+	Value (Union[int,float]): 假设以 Gwei 为单位的待转换值。
+
+返回值：
+	Result (int): 已转换为以 wei 为单位的值。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.AssemblyToBytecode(Assembly: str) -> str`：
+
+```
+将 EVM Assembly 转为 EVM Bytecode 。
+
+参数：
+	Assembly (str): EVM Assembly
+
+返回值：
+	Bytecode (str): EVM Bytecode 。含 0x 前缀的六进制形式。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.BytecodeToAssembly(Bytecode: str) -> str`：
+
+```
+将 EVM Bytecode 转为 EVM Assembly 。
+
+参数：
+	Bytecode (str): EVM Bytecode 。含 0x 前缀的十六进制形式。
+
+返回值：
+	Assembly (str): EVM Assembly 。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.SignatureToRSV(Signature: str) -> dict`：
+
+```
+将签名解析成 R S V 。
+
+参数：
+	Signature (str): 签名。含 0x 前缀的十六进制形式。
+
+返回值：
+	Result (dict): 解析结果。当出现异常时返回 None 。
+	{"Signature"|"R"|"S"|"V"}
+```
+
+<br>
+
+`BlockchainUtils.RSVToSignature(R: str, S: str, V: int) -> dict`：
+
+```
+将 R S V 合并成签名。
+
+参数：
+	R (str): 签名 r 值。含 0x 前缀的十六进制形式。
+	S (str): 签名 s 值。含 0x 前缀的十六进制形式。
+	V (int): 签名 v 值。十进制数字。
+
+返回值：
+	Result (dict): 合并结果。当出现异常时返回 None 。
+	{"R"|"S"|"V"|"Signature"}
+```
+
+<br>
+
+`BlockchainUtils.GetFunctionSelector(FunctionName: str, FunctionParameters: Optional[List[str]] = None) -> str`：
+
+```
+获取四字节函数选择器。
+
+参数：
+	FunctionName (str): 函数名称。
+	FunctionParameters (可选)(Optional[List[str]]): 函数参数列表。默认为空。
+
+返回值：
+	Result (str): 四字节函数选择器。含 0x 前缀的十六进制形式
 ```
 
 <br>
@@ -544,66 +651,6 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 返回值：
 	ToGenerateFunction (str): 碰撞出的函数的名称与参数完整表示。当出现异常时返回 None 。
-```
-
-<br>
-
-`BlockchainUtils.AssemblyToBytecode(Assembly: str) -> str`：
-
-```
-将 EVM Assembly 转为 EVM Bytecode 。
-
-参数：
-	Assembly (str): EVM Assembly
-
-返回值：
-	Bytecode (str): EVM Bytecode 。含 0x 前缀的六进制形式。当出现异常时返回 None 。
-```
-
-<br>
-
-`BlockchainUtils.BytecodeToAssembly(Bytecode: str) -> str`：
-
-```
-将 EVM Bytecode 转为 EVM Assembly 。
-
-参数：
-	Bytecode (str): EVM Bytecode 。含 0x 前缀的十六进制形式。
-
-返回值：
-	Assembly (str): EVM Assembly 。当出现异常时返回 None 。
-```
-
-<br>
-
-`BlockchainUtils.SignatureToRSV(Signature: str) -> dict`：
-
-```
-将签名解析成 R S V 。
-
-参数：
-	Signature (str): 签名。含 0x 前缀的十六进制形式。
-
-返回值：
-	Result (dict): 解析结果。当出现异常时返回 None 。
-	{"Signature"|"R"|"S"|"V"}
-```
-
-<br>
-
-`BlockchainUtils.RSVToSignature(R: str, S: str, V: str) -> dict`：
-
-```
-将 R S V 合并成签名。
-
-参数：
-	R (str): 签名 r 值。含 0x 前缀的十六进制形式。
-	S (str): 签名 s 值。含 0x 前缀的十六进制形式。
-	V (str): 签名 v 值。含 0x 前缀的十六进制形式。
-
-返回值：
-	Result (dict): 合并结果。当出现异常时返回 None 。
-	{"R"|"S"|"V"|"Signature"}
 ```
 
 <br>
