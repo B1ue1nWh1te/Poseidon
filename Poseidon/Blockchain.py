@@ -40,7 +40,7 @@ class Chain():
         RequestParamsPrint = f"[RequestParams]{RequestParams}\n" if RequestParams else ""
         StartTime = time()
         self.Node = Web3(HTTPProvider(RPCUrl, request_kwargs=RequestParams))
-        if self.Node.isConnected():
+        if self.Node.is_connected():
             FinishTime = time()
             Delay = round((FinishTime - StartTime) * 1000)
             logger.success(f"\n[Chain][Initialize]Connected to [{RPCUrl}] [{Delay} ms]\n{RequestParamsPrint}{'-'*80}")
@@ -60,10 +60,10 @@ class Chain():
             {"ChainId"|"BlockNumber"|"GasPrice"|"Timeslot"|"ClientVersion"}
         """
 
-        self.ChainId, BlockNumber, GasPrice, ClientVersion = self.Eth.chain_id, self.Eth.block_number, self.Eth.gas_price, self.Node.clientVersion
+        self.ChainId, BlockNumber, GasPrice, ClientVersion = self.Eth.chain_id, self.Eth.block_number, self.Eth.gas_price, self.Node.client_version
         Timeslot = self.Eth.get_block(BlockNumber).timestamp - self.Eth.get_block(BlockNumber - 1).timestamp
         logger.success(
-            f"\n[Chain][GetBasicInformation]\n[ChainId]{self.ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{Web3.fromWei(GasPrice, 'gwei')} Gwei\n[Timeslot]{Timeslot}s\n[ClientVersion]{ClientVersion}\n{'-'*80}"
+            f"\n[Chain][GetBasicInformation]\n[ChainId]{self.ChainId}\n[BlockNumber]{BlockNumber}\n[GasPrice]{Web3.from_wei(GasPrice, 'gwei')} Gwei\n[Timeslot]{Timeslot}s\n[ClientVersion]{ClientVersion}\n{'-'*80}"
         )
         return {"ChainId": self.ChainId, "BlockNumber": BlockNumber, "GasPrice": GasPrice, "Timeslot": Timeslot, "ClientVersion": ClientVersion}
 
@@ -81,13 +81,13 @@ class Chain():
 
         try:
             Info = self.Eth.wait_for_transaction_receipt(TransactionHash, timeout=120)
-            BlockNumber, TransactionIndex, Status, From, To, ContractAddress, GasUsed, Logs = Info.blockNumber, Info.transactionIndex, Info.status, Info["from"], Info.to, Info.contractAddress, Info.gasUsed, Web3.toJSON(Info.logs)
+            BlockNumber, TransactionIndex, Status, From, To, ContractAddress, GasUsed, Logs = Info.blockNumber, Info.transactionIndex, Info.status, Info["from"], Info.to, Info.contractAddress, Info.gasUsed, Web3.to_json(Info.logs)
             Info = self.Eth.get_transaction(TransactionHash)
             TransactionHash, GasPrice, MaxFeePerGas, MaxPriorityFeePerGas, GasLimit, Nonce, Value, R, S, V, InputData = Info.hash.hex(), Info.gasPrice, Info.get("maxFeePerGas", None), Info.get("maxPriorityFeePerGas", None), Info.gas, Info.nonce, Info.value, Info.r.hex(), Info.s.hex(), Info.v, Info.input
             Type = "EIP-1559" if MaxFeePerGas or MaxPriorityFeePerGas else "Traditional"
-            Action = "Deploy Contract" if To == None else "Call Contract" if self.Eth.get_code(Web3.toChecksumAddress(To)).hex() != "0x" else "Normal Transfer"
+            Action = "Deploy Contract" if To == None else "Call Contract" if self.Eth.get_code(Web3.to_checksum_address(To)).hex() != "0x" else "Normal Transfer"
             ContractPrint = f"[ContractAddress]{ContractAddress}\n" if ContractAddress else ""
-            GasPricePrint = f"[GasPrice]{Web3.fromWei(GasPrice, 'gwei')} Gwei" if Type == "Traditional" else f"[MaxFeePerGas]{Web3.fromWei(MaxFeePerGas, 'gwei')} Gwei\n[MaxPriorityFeePerGas]{Web3.fromWei(MaxPriorityFeePerGas, 'gwei')} Gwei"
+            GasPricePrint = f"[GasPrice]{Web3.from_wei(GasPrice, 'gwei')} Gwei" if Type == "Traditional" else f"[MaxFeePerGas]{Web3.from_wei(MaxFeePerGas, 'gwei')} Gwei\n[MaxPriorityFeePerGas]{Web3.from_wei(MaxPriorityFeePerGas, 'gwei')} Gwei"
             GeneralPrint = f"\n[Chain][GetTransactionInformationByHash]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[Status]{'Success' if Status else 'Fail'}\n[Type]{Type}\n[Action]{Action}\n[From]{From}\n[To]{To}\n{ContractPrint}{GasPricePrint}\n[GasLimit]{GasLimit} [GasUsed]{GasUsed}\n[Nonce]{Nonce} [Value]{Value}\n[R]{R}\n[S]{S}\n[V]{V}\n[Logs]{Logs}\n[InputData]{InputData}\n{'-'*80}"
             if Status:
                 logger.success(GeneralPrint)
@@ -122,7 +122,7 @@ class Chain():
             Type = "EIP-1559" if MaxFeePerGas else "Traditional"
             Action = "Deploy Contract" if To == None else "Call Contract" if self.Eth.get_code(Web3.toChecksumAddress(To)).hex() != "0x" else "Normal Transfer"
             ContractPrint = f"[ContractAddress]{ContractAddress}\n" if ContractAddress else ""
-            GasPricePrint = f"[GasPrice]{Web3.fromWei(GasPrice, 'gwei')} Gwei" if Type == "Traditional" else f"[MaxFeePerGas]{Web3.fromWei(MaxFeePerGas, 'gwei')} Gwei\n[MaxPriorityFeePerGas]{Web3.fromWei(MaxPriorityFeePerGas, 'gwei')} Gwei"
+            GasPricePrint = f"[GasPrice]{Web3.from_wei(GasPrice, 'gwei')} Gwei" if Type == "Traditional" else f"[MaxFeePerGas]{Web3.from_wei(MaxFeePerGas, 'gwei')} Gwei\n[MaxPriorityFeePerGas]{Web3.from_wei(MaxPriorityFeePerGas, 'gwei')} Gwei"
             GeneralPrint = f"\n[Chain][GetTransactionInformationByBlockIdAndIndex]\n[TransactionHash]{TransactionHash}\n[BlockNumber]{BlockNumber}\n[TransactionIndex]{TransactionIndex}\n[Status]{'Success' if Status else 'Fail'}\n[Type]{Type}\n[Action]{Action}\n[From]{From}\n[To]{To}\n{ContractPrint}{GasPricePrint}\n[GasLimit]{GasLimit} [GasUsed]{GasUsed}\n[Nonce]{Nonce} [Value]{Value}\n[R]{R}\n[S]{S}\n[V]{V}\n[Logs]{Logs}\n[InputData]{InputData}\n{'-'*80}"
             if Status:
                 logger.success(GeneralPrint)
@@ -150,7 +150,7 @@ class Chain():
 
         try:
             Info = self.Eth.get_block(BlockID)
-            BlockNumber, BlockHash, Miner, TimeStamp, GasLimit, GasUsed, Transactions = Info.number, Info.hash.hex(), Info.miner, Info.timestamp, Info.gasLimit, Info.gasUsed, Web3.toJSON(Info.transactions)
+            BlockNumber, BlockHash, Miner, TimeStamp, GasLimit, GasUsed, Transactions = Info.number, Info.hash.hex(), Info.miner, Info.timestamp, Info.gasLimit, Info.gasUsed, Web3.to_json(Info.transactions)
             logger.success(
                 f"\n[Chain][GetBlockInformation]\n[BlockNumber]{BlockNumber}\n[BlockHash]{BlockHash}\n[Miner]{Miner}\n[TimeStamp]{TimeStamp}\n[GasLimit]{GasLimit}\n[GasUsed]{GasUsed}\n[Transactions]{Transactions}"
             )
@@ -174,10 +174,10 @@ class Chain():
         """
 
         try:
-            Address = Web3.toChecksumAddress(Address)
+            Address = Web3.to_checksum_address(Address)
             Balance = self.Eth.get_balance(Address)
             logger.success(
-                f"\n[Chain][GetBalance]\n[Address]{Address}\n[Balance][{Balance} Wei]<=>[{Web3.fromWei(Balance,'ether')} Ether]\n{'-'*80}"
+                f"\n[Chain][GetBalance]\n[Address]{Address}\n[Balance][{Balance} Wei]<=>[{Web3.from_wei(Balance,'ether')} Ether]\n{'-'*80}"
             )
             return Balance
         except Exception:
@@ -197,7 +197,7 @@ class Chain():
         """
 
         try:
-            Address = Web3.toChecksumAddress(Address)
+            Address = Web3.to_checksum_address(Address)
             Code = self.Eth.get_code(Address).hex()
             logger.success(f"\n[Chain][GetCode]\n[Address]{Address}\n[Code]{Code}\n{'-'*80}")
             return Code
@@ -219,7 +219,7 @@ class Chain():
         """
 
         try:
-            Address = Web3.toChecksumAddress(Address)
+            Address = Web3.to_checksum_address(Address)
             Data = self.Eth.get_storage_at(Address, SlotIndex).hex()
             logger.success(
                 f"\n[Chain][GetStorage]\n[Address]{Address}\n[SlotIndex]{SlotIndex}\n[Value][Hex][{Data}]<=>[Dec][{int(Data,16)}]\n{'-'*80}"
@@ -245,7 +245,7 @@ class Chain():
         """
 
         try:
-            Address = Web3.toChecksumAddress(Address)
+            Address = Web3.to_checksum_address(Address)
             Data = [self.Eth.get_storage_at(Address, i).hex() for i in range(Count)]
             Temp = '\n'.join([f"[Slot {i}]{Data[i]}" for i in range(len(Data))])
             logger.success(f"\n[Chain][DumpStorage]\n[Address]{Address}\n{Temp}\n{'-'*80}")
@@ -271,7 +271,7 @@ class Chain():
         try:
             from eth_account._utils.signing import to_standard_v, extract_chain_id, serializable_unsigned_transaction_from_dict
             Transaction = self.Eth.get_transaction(TransactionHash)
-            Signature = self.Eth.account._keys.Signature(vrs=(to_standard_v(extract_chain_id(Transaction.v)[1]), Web3.toInt(Transaction.r), Web3.toInt(Transaction.s)))
+            Signature = self.Eth.account._keys.Signature(vrs=(to_standard_v(extract_chain_id(Transaction.v)[1]), Web3.to_int(Transaction.r), Web3.to_int(Transaction.s)))
             UnsignedTransactionDict = {i: Transaction[i] for i in ['chainId', 'nonce', 'gasPrice' if int(
                 Transaction.type, 0) != 2 else '', 'gas', 'to', 'value', 'accessList', 'maxFeePerGas', 'maxPriorityFeePerGas'] if i in Transaction}
             UnsignedTransactionDict['data'] = Transaction['input']
@@ -363,7 +363,7 @@ class Account():
 
         try:
             From = self.EthAccount.address
-            To = Web3.toChecksumAddress(To)
+            To = Web3.to_checksum_address(To)
             Txn = {
                 "chainId": self._Chain.ChainId,
                 "from": From,
@@ -375,7 +375,7 @@ class Account():
                 "data": Data,
             }
             SignedTxn = self.EthAccount.sign_transaction(Txn)
-            Txn["gasPrice"] = f'{Web3.fromWei(Txn["gasPrice"],"gwei")} Gwei'
+            Txn["gasPrice"] = f'{Web3.from_wei(Txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][Transfer]\n[Txn]{dumps(Txn, indent=2)}\n{'-'*80}")
             if self._Request:
                 logger.warning(f"\n[Account][RequestAuthorizationBeforeSendTransaction][True]\nDo you confirm sending this transaction?")
@@ -410,7 +410,7 @@ class Account():
 
         try:
             From = self.EthAccount.address
-            To = Web3.toChecksumAddress(To)
+            To = Web3.to_checksum_address(To)
             Txn = {
                 "chainId": self._Chain.ChainId,
                 "from": From,
@@ -422,7 +422,7 @@ class Account():
                 "data": Data,
             }
             SignedTxn = self.EthAccount.sign_transaction(Txn)
-            Txn["gasPrice"] = f'{Web3.fromWei(Txn["gasPrice"],"gwei")} Gwei'
+            Txn["gasPrice"] = f'{Web3.from_wei(Txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][SendTransaction][Traditional]\n[Txn]{dumps(Txn, indent=2)}\n{'-'*80}")
             if self._Request:
                 logger.warning(f"\n[Account][RequestAuthorizationBeforeSendTransaction][True]\nDo you confirm sending this transaction?")
@@ -458,7 +458,7 @@ class Account():
 
         try:
             From = self.EthAccount.address
-            To = Web3.toChecksumAddress(To)
+            To = Web3.to_checksum_address(To)
             BaseFee = BaseFee if BaseFee else self._Eth.gas_price
             MaxPriorityFee = MaxPriorityFee if MaxPriorityFee else self._Eth.max_priority_fee
             Txn = {
@@ -473,8 +473,8 @@ class Account():
                 "data": Data
             }
             SignedTxn = self.EthAccount.sign_transaction(Txn)
-            Txn["maxFeePerGas"] = f'{Web3.fromWei(Txn["maxFeePerGas"],"gwei")} Gwei'
-            Txn["maxPriorityFeePerGas"] = f'{Web3.fromWei(Txn["maxPriorityFeePerGas"],"gwei")} Gwei'
+            Txn["maxFeePerGas"] = f'{Web3.from_wei(Txn["maxFeePerGas"],"gwei")} Gwei'
+            Txn["maxPriorityFeePerGas"] = f'{Web3.from_wei(Txn["maxPriorityFeePerGas"],"gwei")} Gwei'
             logger.info(f"\n[Account][SendTransaction][EIP-1559]\n[Txn]{dumps(Txn, indent=2)}\n{'-'*80}")
             if self._Request:
                 logger.warning(f"\n[Account][RequestAuthorizationBeforeSendTransaction][True]\nDo you confirm sending this transaction?")
@@ -521,7 +521,7 @@ class Account():
                 "data": TransactionData["data"]
             }
             SignedTxn = self.EthAccount.sign_transaction(Txn)
-            Txn["gasPrice"] = f'{Web3.fromWei(Txn["gasPrice"],"gwei")} Gwei'
+            Txn["gasPrice"] = f'{Web3.from_wei(Txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][DeployContract]\n[Txn]{dumps(Txn, indent=2)}\n{'-'*80}")
             if self._Request:
                 logger.warning(f"\n[Account][RequestAuthorizationBeforeSendTransaction][True]\nDo you confirm sending this transaction?")
@@ -570,7 +570,7 @@ class Account():
                 "data": Bytecode,
             }
             SignedTxn = self.EthAccount.sign_transaction(Txn)
-            Txn["gasPrice"] = f'{Web3.fromWei(Txn["gasPrice"],"gwei")} Gwei'
+            Txn["gasPrice"] = f'{Web3.from_wei(Txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][DeployContractWithoutABI]\n[Txn]{dumps(Txn, indent=2)}\n{'-'*80}")
             if self._Request:
                 logger.warning(f"\n[Account][RequestAuthorizationBeforeSendTransaction][True]\nDo you confirm sending this transaction?")
@@ -662,7 +662,7 @@ class Contract():
         """
 
         try:
-            self._Account, self._Eth, self.Address = Account, Account._Eth, Web3.toChecksumAddress(Address)
+            self._Account, self._Eth, self.Address = Account, Account._Eth, Web3.to_checksum_address(Address)
             self.Instance = self._Eth.contract(address=self.Address, abi=ABI)
             logger.success(f"\n[Contract][Initialize]Successfully instantiated contract [{self.Address}]\n{'-'*80}")
         except Exception:
@@ -832,7 +832,7 @@ class BlockchainUtils():
         """
 
         Temp = EthAccount.create()
-        Address, PrivateKey = Web3.toChecksumAddress(Temp.address), Temp.privateKey.hex()
+        Address, PrivateKey = Web3.to_checksum_address(Temp.address), Temp.privateKey.hex()
         logger.success(f"\n[BlockchainUtils][CreateNewAccount]\n[Address]{Address}\n[PrivateKey]{PrivateKey}\n{'-'*80}")
         return (Address, PrivateKey)
 
@@ -851,7 +851,7 @@ class BlockchainUtils():
         try:
             EthAccount.enable_unaudited_hdwallet_features()
             Temp = EthAccount.from_mnemonic(Mnemonic)
-            Address, PrivateKey = Web3.toChecksumAddress(Temp.address), Temp.privateKey.hex()
+            Address, PrivateKey = Web3.to_checksum_address(Temp.address), Temp.privateKey.hex()
             logger.success(
                 f"\n[BlockchainUtils][MnemonicToAddressAndPrivateKey]\n[Mnemonic]{Mnemonic}\n[Address]{Address}\n[PrivateKey]{PrivateKey}\n{'-'*80}"
             )
