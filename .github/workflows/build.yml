@@ -1,4 +1,4 @@
-name: PyPI Release
+name: Publish to PyPI
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.9"
 
       - name: Build source and wheel distributions
         run: |
@@ -25,7 +25,7 @@ jobs:
           twine check --strict dist/*
 
       - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1.8
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
