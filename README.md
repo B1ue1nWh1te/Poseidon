@@ -9,10 +9,10 @@
 与任何以太坊同构链交互，主要用于在 CTF 比赛中攻克 Blockchain 方向的题目。
 
 [![Lisence](https://img.shields.io/github/license/B1ue1nWh1te/Poseidon)](https://github.com/B1ue1nWh1te/Poseidon/blob/main/LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon?include_prereleases)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
 [![Visitors](https://visitor-badge.glitch.me/badge?page_id=B1ue1nWh1te-Poseidon&left_color=gray&right_color=orange)](https://github.com/B1ue1nWh1te/Poseidon)
-![Downloads](https://img.shields.io/pypi/dm/poseidon-python)
+![Downloads](https://img.shields.io/pypi/dd/poseidon-python)
 
 </div>
 
