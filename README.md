@@ -2,7 +2,7 @@
 
 # Poseidon
 
-![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fseaeye%2Flogo.png&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Light)
+![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fseaverse%2Flogo.png&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Light)
 
 **海神波塞冬 Poseidon** 工具对常用的链上交互操作进行了封装，使得开发者能够便捷地
 
@@ -22,7 +22,7 @@
 
 2. 在使用 `Blockchain` 模块时，你始终应该使用全新生成的账户，而不是导入常用的具有实际价值的账户，以确保你的账户安全。
 
-3. `Blockchain` 模块的所有功能在 `Goerli` 测试网络中均正常通过检验。
+3. `Blockchain` 模块的所有功能在 `Goerli, Sepolia` 测试网络中均正常通过检验。
 
 4. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
 
@@ -57,7 +57,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 `Chain(RPCUrl: str, RequestParams: Optional[dict] = None)`：
 
 ```
-初始化。根据给定的节点 RPC 地址进行连接，可通过代理访问。当连接节点失败时会抛出异常。
+初始化。根据给定的节点 RPC 地址以 HTTP/HTTPS 方式进行连接，可通过代理访问。当连接节点失败时会抛出异常。
 
 参数：
 	RPCUrl (str): 节点 RPC 地址
@@ -72,14 +72,17 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 
 <br>
 
-`Chain.GetBasicInformation() -> dict`：
+`Chain.GetBasicInformation(ShowTimeslot: bool = True) -> dict`：
 
 ```
-获取区块链基本信息。包括链 ID 、区块高度、 GasPrice 、出块间隔、当前节点的客户端软件版本号。
+获取区块链基本信息。包括 ChainId 、BlockNumber 、GasPrice 、(Timeslot)、ClientVersion 。
+
+参数：
+	ShowTimeslot (bool): 是否获取并显示 Timeslot 。该操作比较耗时，在主动调用时默认为 True , 在 Chain 实例初始化时默认为 False 。
 
 返回值：
 	BasicInformation (dict): 区块链基本信息构成的字典。
-	{"ChainId"|"BlockNumber"|"GasPrice"|"Timeslot"|"ClientVersion"}
+	{"ChainId"|"BlockNumber"|"GasPrice"|("Timeslot")|"ClientVersion"}
 ```
 
 <br>
@@ -94,7 +97,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典。当出现异常时返回 None 。
-	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"R"|"S"|"V"|"RawTransaction"|"Logs"|"InputData"}
+	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"R"|"S"|"V"|"Logs"|"InputData"}
 ```
 
 <br>
@@ -139,7 +142,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	Address (str): 账户地址
 
 返回值：
-	Balance (int): 账户网络原生代币余额。单位为 wei ，当出现异常时返回 None 。
+	Balance (int): 账户网络原生代币余额，单位为 wei 。当出现异常时返回 None 。
 ```
 
 <br>
@@ -153,12 +156,12 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	Address (str): 合约地址
 
 返回值：
-	Code (str): 合约已部署字节码。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
+	Code (str): 合约已部署字节码。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Chain.GetStorage(Address: str, Index: int) -> str`：
+`Chain.GetStorage(Address: str, SlotIndex: int) -> str`：
 
 ```
 根据合约地址和存储插槽索引获取存储值。
@@ -168,7 +171,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	SlotIndex (int): 存储插槽索引
 
 返回值：
-	Data (str): 存储值。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
+	Data (str): 存储值。当出现异常时返回 None 。
 ```
 
 <br>
@@ -183,7 +186,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	Count (int): 指定插槽数量值
 
 返回值：
-	Data (List[str]): 存储值列表。含 0x 前缀的十六进制形式，当出现异常时返回 None 。
+	Data (List[str]): 存储值列表。当出现异常时返回 None 。
 ```
 
 <br>
@@ -213,7 +216,7 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 参数：
 	Chain (Poseidon.Blockchain.Chain): 区块链实例
-	PrivateKey (str): 账户私钥。不含 0x 前缀的十六进制形式。
+	PrivateKey (str): 账户私钥。
 
 成员变量：
 	EthAccount (eth_account.Account): eth_account 的原生 Account 对象实例
@@ -224,10 +227,10 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 `Account.RequestAuthorizationBeforeSendTransaction(Open: bool = True)`：
 
 ```
-设置在通过该账户发送每一笔交易之前是否请求授权。开启后会在每笔交易即将发送前暂停流程，在终端询问是否发送该笔交易。在实例化 Account 对象时默认设置为 False 。
+设置在通过该账户发送每一笔交易之前是否请求授权。开启后会在每笔交易即将发送前暂停流程，在终端询问是否发送该笔交易。
 
 参数：
-	Open (bool): 请求授权开关。函数定义的默认值为 True ，但在实例化 Account 对象时默认设置为 False 。
+	Open (bool): 请求授权开关。主动调用时默认值为 True ，但在 Account 实例初始化时默认设置为 False 。
 ```
 
 <br>
@@ -238,7 +241,7 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 获取自身账户的网络原生代币余额。
 
 返回值：
-	Balance (int): 自身账户网络原生代币余额。单位为 wei ，当出现异常时返回 None 。
+	Balance (int): 自身账户网络原生代币余额，单位为 wei 。当出现异常时返回 None 。
 ```
 
 <br>
@@ -250,10 +253,10 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 参数：
 	To (str): 接收方地址
-	Value (int): 发送的网络原生代币数量。单位为 wei 。
-	Data (可选)(str): 交易数据。含 0x 前缀的十六进制形式，默认值为 "0x" 。
-	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 100000 wei 。
+	Value (int): 发送的网络原生代币数量，单位为 wei 。
+	Data (可选)(str): 交易数据。含 0x 前缀的十六进制形式。默认值为 "0x" 。
+	GasPrice (可选)(Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 100000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -269,9 +272,9 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 参数：
 	To (str): 接收方地址
 	Data (str): 交易数据。含 0x 前缀的十六进制形式。
-	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
+	Value (可选)(int): 随交易发送的网络原生代币数量，单位为 wei ，默认为 0 wei 。
+	GasPrice (可选)(Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 1000000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -287,10 +290,10 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 参数：
 	To (str): 接收方地址
 	Data (str): 交易数据。含 0x 前缀的十六进制形式。
-	Value (可选)(int): 随交易发送的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	BaseFee (可选)(Optional[int]): BaseFee 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	MaxPriorityFee (可选)(Optional[int]): MaxPriorityFee 价格。单位为 wei ，默认使用 RPC 建议的 max_priority_fee 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 1000000 wei 。
+	Value (可选)(int): 随交易发送的网络原生代币数量，单位为 wei ，默认为 0 wei 。
+	BaseFee (可选)(Optional[int]): BaseFee 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	MaxPriorityFee (可选)(Optional[int]): MaxPriorityFee 价格，单位为 wei ，默认使用 RPC 建议的 max_priority_fee 。
+	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 1000000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -305,14 +308,14 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 参数：
 	ABI (dict): 合约 ABI
-	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
-	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	Bytecode (str): 合约部署字节码。
+	Value (可选)(int): 随交易发送给合约的网络原生代币数量，单位为 wei ，默认为 0 wei 。
+	GasPrice (可选)(Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
 	*Arguments (可选)(Optional[Any]): 传给合约构造函数的参数，默认为空。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
-	当合约部署成功时，字典中会额外添加"Contract"字段，该变量是已实例化的 Contract 对象，失败时为 None。
+	当合约部署成功时，字典中会额外添加"Contract"字段，该变量是已实例化的 Contract 对象，若失败则为 None。
 ```
 
 <br>
@@ -323,10 +326,10 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 在没有 ABI 的情况下，仅使用字节码来部署合约。若 120 秒内交易未确认则作超时处理。
 
 参数：
-	Bytecode (str): 合约部署字节码。含 0x 前缀的十六进制形式。
-	Value (可选)(int): 随交易发送给合约的网络原生代币数量。单位为 wei ，默认为 0 wei 。
-	GasPrice (可选)(Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	GasLimit (可选)(int): Gas 最大使用量。单位为 wei ，默认为 5000000 wei 。
+	Bytecode (str): 合约部署字节码。
+	Value (可选)(int): 随交易发送给合约的网络原生代币数量，单位为 wei ，默认为 0 wei 。
+	GasPrice (可选)(Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 5000000 wei 。
 
 返回值：
 	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
@@ -406,9 +409,9 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 通过传入函数名及参数来调用该合约内的函数。支持自定义 Value 和 GasLimit 。
 
 参数：
-	Value (int): 随交易发送的网络原生代币数量。单位为 wei 。
-	GasPrice (Optional[int]): Gas 价格。单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	GasLimit (int): Gas 最大使用量。单位为 wei 。
+	Value (int): 随交易发送的网络原生代币数量，单位为 wei 。
+	GasPrice (Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
+	GasLimit (int): Gas 最大使用量，单位为 wei 。
 	FunctionName (str): 函数名称
 	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
 
@@ -444,6 +447,20 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 返回值：
 	CallData (str): 调用数据编码。含 0x 前缀的十六进制形式。当出现异常时返回 None 。
+```
+
+<br>
+
+`Contract.DecodeFunctionInputData(InputData: str) -> tuple`：
+
+```
+解码对当前合约执行调用的 InputData ，得出所调用的函数及其参数值。
+
+参数：
+	InputData (str): 对当前合约执行调用的 InputData
+
+返回值：
+	Result (tuple): 函数及其参数值
 ```
 
 <br>
@@ -571,11 +588,11 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 参数：
 	R (str): 签名 r 值。含 0x 前缀的十六进制形式。
 	S (str): 签名 s 值。含 0x 前缀的十六进制形式。
-	V (int): 签名 v 值。十进制数字。
+	V (int): 签名 v 值。含 0x 前缀的十六进制形式。
 
 返回值：
 	Result (dict): 合并结果。当出现异常时返回 None 。
-	{"R"|"S"|"V"|"Signature"}
+	{"Signature"|"R"|"S"|"V"}
 ```
 
 <br>
@@ -651,6 +668,37 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 返回值：
 	ToGenerateFunction (str): 碰撞出的函数的名称与参数完整表示。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.GetContractAddressByCREATE(Deployer: str, Nonce: int) -> str`：
+
+```
+获取某账户以 CREATE 方式部署的合约的地址。
+
+参数：
+	Deployer (str): 部署者地址
+	Nonce (int): 部署者发送合约部署交易的 nonce 值
+
+返回值：
+	Address (str): 计算出的合约地址
+```
+
+<br>
+
+`BlockchainUtils.GetContractAddressByCREATE2(Deployer: str, Salt: str, CreationCode: str) -> str`：
+
+```
+获取某合约账户以 CREATE2 方式部署的另一个合约的地址。
+
+参数：
+	Deployer (str): 部署者地址
+	Salt (str): 盐值
+	CreationCode (str): 合约的创建时字节码
+
+返回值：
+	Address (str): 计算出的合约地址
 ```
 
 <br>
