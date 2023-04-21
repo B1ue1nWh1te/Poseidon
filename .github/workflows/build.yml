@@ -24,7 +24,7 @@ jobs:
           python -m build
           twine check --strict dist/*
 
-      - name: Publish distribution to PyPI
+      - name: Publish distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1.8
         with:
           user: __token__
