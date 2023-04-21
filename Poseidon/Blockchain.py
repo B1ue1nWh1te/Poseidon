@@ -673,7 +673,7 @@ class Account():
         try:
             from eth_account.messages import encode_defunct
             SignedMessage = self.EthAccount.sign_message(encode_defunct(text=Message))
-            MessageHash, Signature, R, S, V = SignedMessage.messageHash.hex(), SignedMessage.signature.hex(), f"0x{int(hex(SignedMessage.r), 16):02x}", f"0x{int(hex(SignedMessage.s), 16):02x}", SignedMessage.v
+            MessageHash, Signature, R, S, V = SignedMessage.messageHash.hex(), SignedMessage.signature.hex(), f"0x{int(hex(SignedMessage.r), 16):0>64x}", f"0x{int(hex(SignedMessage.s), 16):0>64x}", SignedMessage.v
             logger.success(
                 f"\n[Account][SignMessage]\n[Address]{self.EthAccount.address}\n[Message]{Message}\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[R]{R}\n[S]{S}\n[V]{V}\n{'-'*80}"
             )
@@ -708,7 +708,7 @@ class Account():
 
         try:
             SignedMessage = self.EthAccount.signHash(MessageHash)
-            Signature, R, S, V = SignedMessage.signature.hex(), f"0x{int(hex(SignedMessage.r), 16):02x}", f"0x{int(hex(SignedMessage.s), 16):02x}", SignedMessage.v
+            Signature, R, S, V = SignedMessage.signature.hex(), f"0x{int(hex(SignedMessage.r), 16):0>64x}", f"0x{int(hex(SignedMessage.s), 16):0>64x}", SignedMessage.v
             logger.success(
                 f"\n[Account][SignMessageHash]\n[Address]{self.EthAccount.address}\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[R]{R}\n[S]{S}\n[V]{V}\n{'-'*80}"
             )
