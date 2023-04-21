@@ -20,6 +20,6 @@ setup(
     license="GPL-3.0",
     packages=["Poseidon"],
     python_requires='>=3.9',
-    install_requires=["web3==latest", "py-solc-x==latest", "pyevmasm==latest", "loguru==latest", "pycryptodome==latest", "gmpy2==latest", "pwntools==latest"],
+    install_requires=["web3>==6.2.0", "py-solc-x>==1.1.1", "pyevmasm>==0.2.3", "loguru>==0.7.0", "pycryptodome>=3.17", "gmpy2>==2.1.5", "pwntools>==4.9.0"],
     zip_safe=False
 )
