@@ -11,18 +11,17 @@
 [![Lisence](https://img.shields.io/github/license/B1ue1nWh1te/Poseidon)](https://github.com/B1ue1nWh1te/Poseidon/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon?include_prereleases)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
-[![Visitors](https://visitor-badge.glitch.me/badge?page_id=B1ue1nWh1te-Poseidon&left_color=gray&right_color=orange)](https://github.com/B1ue1nWh1te/Poseidon)
-![Downloads](https://img.shields.io/pypi/dd/poseidon-python)
+[![Downloads](https://img.shields.io/pypi/dd/poseidon-python)](https://pypi.org/project/poseidon-python/)
 
 </div>
 
 # 注意事项
 
-1. **本工具原则上仅可用于 CTF 比赛解题或测试链开发。但开源工具无法约束使用场景，若执意要在具有经济价值的公链中使用，所产生的影响将由你自行承担。**
+1. **本工具原则上仅可用于 CTF 比赛解题或测试链开发，请勿在具有经济价值的公链中使用。**
 
 2. 在使用 `Blockchain` 模块时，你始终应该使用全新生成的账户，而不是导入常用的具有实际价值的账户，以确保你的账户安全。
 
-3. `Blockchain` 模块的所有功能在 `Goerli, Sepolia` 测试网络中均正常通过检验。
+3. `Blockchain` 模块的所有功能在 `Goerli, Sepolia, Mumbai` 测试网络中均正常通过检验。
 
 4. 如果你在使用过程中遇到了其他问题，或者有任何好的想法和建议，欢迎提[issue](https://github.com/B1ue1nWh1te/Poseidon/issues)进行反馈。
 
@@ -38,13 +37,16 @@ pip install -U poseidon-python
 
 本模块可用于与任何以太坊同构链（即通常所说的 EVM 链）进行交互，支持常用的链上交互操作。
 
-基于[Web3.py](https://github.com/ethereum/web3.py)实现。
+主要基于[Web3.py](https://github.com/ethereum/web3.py)实现。
 
 基本的使用方法可以参考我之前参加比赛时写的 WriteUps：
 
+- [ACTF 2023 Blockchain Writeup](https://www.seaeye.cn/archives/514.html)
 - [VNCTF 2023 Blockchain Writeup](https://www.seaeye.cn/archives/497.html)
 - [第五届“强网”拟态防御国际精英挑战赛线上预选赛 区块链方向题解](https://www.seaeye.cn/archives/487.html)
 - [2023 RealWorldCTF 体验赛 Blockchain Writeup](https://www.seaeye.cn/archives/494.html)
+
+或者查看[example](https://github.com/B1ue1nWh1te/Poseidon/tree/main/example)中的示例。
 
 ```python
 from Poseidon.Blockchain import *
@@ -72,7 +74,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 
 <br>
 
-`Chain.GetBasicInformation(ShowTimeslot: bool = True) -> dict`：
+`Chain.GetBasicInformation(ShowTimeslot: bool = True) -> ChainBasicInformationData`：
 
 ```
 获取区块链基本信息。包括 ChainId 、BlockNumber 、GasPrice 、(Timeslot)、ClientVersion 。
@@ -81,13 +83,13 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	ShowTimeslot (bool): 是否获取并显示 Timeslot 。该操作比较耗时，在主动调用时默认为 True , 在 Chain 实例初始化时默认为 False 。
 
 返回值：
-	BasicInformation (dict): 区块链基本信息构成的字典。
+	BasicInformation (Poseidon.ChainBasicInformationData): 区块链基本信息。
 	{"ChainId"|"BlockNumber"|"GasPrice"|("Timeslot")|"ClientVersion"}
 ```
 
 <br>
 
-`Chain.GetTransactionInformationByHash(TransactionHash: str) -> dict`：
+`Chain.GetTransactionInformationByHash(TransactionHash: str) -> TransactionReceiptData`：
 
 ```
 根据交易哈希查询该交易的详细回执信息。包括交易哈希、所在区块号、交易索引号、交易状态、交易类型、交易行为、发送者、接收者、(部署的合约地址)、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas))、GasLimit、GasUsed、Nonce、Value、R、S、V、Logs、InputData。
@@ -96,13 +98,13 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	TransactionHash (str): 要查询的交易的哈希
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息。当出现异常时返回 None 。
 	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"R"|"S"|"V"|"Logs"|"InputData"}
 ```
 
 <br>
 
-`Chain.GetTransactionInformationByBlockIdAndIndex(BlockID: Union[str,int], TransactionIndex: int) -> dict`：
+`Chain.GetTransactionInformationByBlockIdAndIndex(BlockID: Union[str, int], TransactionIndex: int) -> TransactionReceiptData`：
 
 ```
 根据区块 ID 和交易在块中的索引来查询该交易的详细回执信息。包括交易哈希、所在区块号、交易索引号、交易状态、交易类型、交易行为、发送者、接收者、(部署的合约地址)、(GasPrice 或 (MaxFeePerGas 和 MaxPriorityFeePerGas))、GasLimit、GasUsed、Nonce、Value、R、S、V、Logs、InputData。
@@ -112,13 +114,13 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	TransactionIndex (int): 交易在块中的索引
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息。当出现异常时返回 None 。
 	{"TransactionHash"|"BlockNumber"|"TransactionIndex"|"Status"|"Type"|"Action"|"From"|"To"|("ContractAddress")|<"GasPrice"|("MaxFeePerGas"&"MaxPriorityFeePerGas")>|"GasLimit"|"GasUsed"|"Nonce"|"Value"|"R"|"S"|"V"|"Logs"|"InputData"}
 ```
 
 <br>
 
-`Chain.GetBlockInformation(BlockID: Union[str, int]) -> dict`：
+`Chain.GetBlockInformation(BlockID: Union[str, int]) -> BlockInformationData`：
 
 ```
 根据区块 ID 获取该区块的详细信息。包括区块号、区块哈希、矿工、时间戳、GasLimit、GasUsed、块内交易的哈希集合。
@@ -127,7 +129,7 @@ Chain 是区块链实例，后续的所有链上交互的操作都将经由该�
 	BlockID (Union[str,int]): 区块 ID 。可为区块号数值或 'latest', 'earliest', 'pending' 。
 
 返回值：
-	BlockInformation (dict): 区块信息构成的字典。当出现异常时返回 None 。
+	BlockInformation (Poseidon.BlockInformationData): 区块信息。当出现异常时返回 None 。
 	{"BlockNumber"|"BlockHash"|"Miner"|"TimeStamp"|"GasLimit"|"GasUsed"|"Transactions"}
 ```
 
@@ -246,7 +248,7 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 
 <br>
 
-`Account.Transfer(To: str, Value: int, Data: str = "0x", GasPrice: Optional[int] = None, GasLimit: int = 100000) -> dict`：
+`Account.Transfer(To: str, Value: int, Data: str = "0x", GasPrice: Optional[int] = None, GasLimit: int = 100000) -> TransactionReceiptData`：
 
 ```
 向指定账户转账指定数量的网络原生代币，可附带信息。若 120 秒内交易未确认则作超时处理。
@@ -259,12 +261,12 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 100000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Account.SendTransaction(To: str, Data: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 1000000) -> dict`：
+`Account.SendTransaction(To: str, Data: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 1000000) -> TransactionReceiptData`：
 
 ```
 以传统方式发送一笔自定义交易。若 120 秒内交易未确认则作超时处理。
@@ -277,12 +279,12 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 1000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Account.SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, BaseFee: Optional[int] = None, MaxPriorityFee: Optional[int] = None, GasLimit: int = 1000000) -> dict`：
+`Account.SendTransactionByEIP1559(To: str, Data: str, Value: int = 0, BaseFee: Optional[int] = None, MaxPriorityFee: Optional[int] = None, GasLimit: int = 1000000) -> TransactionReceiptData`：
 
 ```
 以 EIP-1559 方式发送一笔自定义交易。若 120 秒内交易未确认则作超时处理。
@@ -296,12 +298,12 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 1000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Account.DeployContract(ABI: dict, Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, *Arguments: Optional[Any]) -> dict`：
+`Account.DeployContract(ABI: dict, Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, *Arguments: Optional[Any]) -> TransactionReceiptData`：
 
 ```
 部署合约。若 120 秒内交易未确认则作超时处理。
@@ -314,13 +316,13 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	*Arguments (可选)(Optional[Any]): 传给合约构造函数的参数，默认为空。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
-	当合约部署成功时，字典中会额外添加"Contract"字段，该变量是已实例化的 Contract 对象，若失败则为 None。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	当合约部署成功时，返回值中会额外添加"Contract"字段，该变量是已实例化的 Contract 对象，若失败则为 None。
 ```
 
 <br>
 
-`Account.DeployContractWithoutABI(Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 5000000) -> dict`：
+`Account.DeployContractWithoutABI(Bytecode: str, Value: int = 0, GasPrice: Optional[int] = None, GasLimit: int = 3000000) -> TransactionReceiptData`：
 
 ```
 在没有 ABI 的情况下，仅使用字节码来部署合约。若 120 秒内交易未确认则作超时处理。
@@ -329,15 +331,15 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	Bytecode (str): 合约部署字节码。
 	Value (可选)(int): 随交易发送给合约的网络原生代币数量，单位为 wei ，默认为 0 wei 。
 	GasPrice (可选)(Optional[int]): Gas 价格，单位为 wei ，默认使用 RPC 建议的 gas_price 。
-	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 5000000 wei 。
+	GasLimit (可选)(int): Gas 最大使用量，单位为 wei ，默认为 3000000 wei 。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Account.SignMessage(Message: str) -> dict`：
+`Account.SignMessage(Message: str) -> SignedMessageData`：
 
 ```
 消息字符串进行签名。
@@ -346,13 +348,13 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	Message (str): 待签名消息字符串
 
 返回值：
-	SignatureData (str): 签名数据构成的字典。当出现异常时返回 None 。
-	{"Address"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
+	SignatureData (Poseidon.SignedMessageData): 签名数据。当出现异常时返回 None 。
+	{"SignerAddress"|"Message"|"MessageHash"|"Signature"|"R"|"S"|"V"}
 ```
 
 <br>
 
-`Account.SignMessageHash(MessageHash: str) -> dict`：
+`Account.SignMessageHash(MessageHash: str) -> SignedMessageData`：
 
 ```
 对消息哈希进行签名。
@@ -361,8 +363,8 @@ Account 是账户实例，后续的交易将经由该指定账户发送至链上
 	MessageHash (str): 待签名消息哈希
 
 返回值：
-	SignatureData (str): 签名数据构成的字典。当出现异常时返回 None 。
-	{"Address"|"MessageHash"|"Signature"|"R"|"S"|"V"}
+	SignatureData (Poseidon.SignedMessageData): 签名数据。当出现异常时返回 None 。
+	{"SignerAddress"|"MessageHash"|"Signature"|"R"|"S"|"V"}
 ```
 
 <br>
@@ -388,7 +390,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`Contract.CallFunction(FunctionName: str, *FunctionArguments: Optional[Any]) -> dict`：
+`Contract.CallFunction(FunctionName: str, *FunctionArguments: Optional[Any]) -> TransactionReceiptData`：
 
 ```
 通过传入函数名及参数来调用该合约内的函数。
@@ -398,12 +400,12 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 	*FunctionArguments (可选)(Optional[Any]): 函数参数，默认为空。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
 
-`Contract.CallFunctionWithParameters(Value: int, GasPrice: Optional[int], GasLimit: int, FunctionName: str, *FunctionArguments: Optional[Any]) -> dict`：
+`Contract.CallFunctionWithParameters(Value: int, GasPrice: Optional[int], GasLimit: int, FunctionName: str, *FunctionArguments: Optional[Any]) -> TransactionReceiptData`：
 
 ```
 通过传入函数名及参数来调用该合约内的函数。支持自定义 Value 和 GasLimit 。
@@ -416,7 +418,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 	*FunctionArguments (Optional[Any]): 函数参数，默认为空。
 
 返回值：
-	TransactionInformation (dict): 交易信息构成的字典，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
+	TransactionInformation (Poseidon.TransactionReceiptData): 交易信息，通过 Chain.GetTransactionInformationByHash 获取。当出现异常时返回 None 。
 ```
 
 <br>
@@ -480,7 +482,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`BlockchainUtils.Compile(FileCourse: str, ContractName: str, SolidityVersion: Optional[str] = None, AllowPaths: Optional[str] = None, Optimize: bool = False) -> tuple`：
+`BlockchainUtils.Compile(FileCourse: str, ContractName: str, SolidityVersion: Optional[str] = None, Optimize: Optional[bool] = None, OptimizeRuns: Optional[int] = None, BasePaths: Optional[str] = None, AllowPaths: Optional[str] = None, EvmVersion: Optional[str] = None) -> tuple`：
 
 ```
 根据给定的参数使用 py-solc-x 编译合约。当编译失败时会抛出异常。
@@ -488,12 +490,29 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 参数：
 	FileCourse (str): 合约文件完整路径。当合约文件与脚本文件在同一目录下时可直接使用文件名。
 	ContractName (str): 要编译的合约名称
-	SolidityVersion (可选)(Optional[str]): 指定使用的 Solidity 版本。若不指定则会使用当前已激活的 Solidity 版本进行编译。默认为 None 。
+	SolidityVersion (可选)(Optional[str]): 指定使用的 Solidity 版本。若不指定则会使用当前已激活的 Solidity 版本进行编译。默认为 None ，使用目前已激活的 solc 版本。
+	Optimize (可选)(bool): 是否开启优化器。默认为 None ，不开启优化器。
+	OptimizeRuns (可选)(int): 优化运行次数。默认为 None ，不开启优化器。
+	BasePaths (可选)(Optional[str]): 指定基础路径。在编译时可能会出现 BasePaths 相关错误可在这里解决。默认为 None 。
 	AllowPaths (可选)(Optional[str]): 指定许可路径。在编译时可能会出现 AllowPaths 相关错误可在这里解决。默认为 None 。
-	Optimize (可选)(bool): 是否开启优化器。默认为 False 。
+	EvmVersion (可选)(Optional[str]): 指定编译时使用的 EVM 版本。默认为 None ，使用当前 solc 支持的最新的 EVM 版本。
 
 返回值：
 	(ABI, Bytecode) (tuple): 由 ABI 和 Bytecode 组成的元组
+```
+
+<br>
+
+`BlockchainUtils.ImportABI(FileCourse: str) -> str`：
+
+```
+导入指定的 ABI 文件内容。
+
+参数：
+	FileCourse (str): ABI 文件完整路径。当 ABI 文件与脚本文件在同一目录下时可直接使用文件名。
+
+返回值：
+	Result (str): ABI 内容
 ```
 
 <br>
@@ -509,13 +528,15 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`BlockchainUtils.MnemonicToAddressAndPrivateKey(Mnemonic: str) -> tuple`：
+`BlockchainUtils.MnemonicToAddressAndPrivateKey(Mnemonic: str, PassPhrase: str = "", AccountPath: str = "m/44'/60'/0'/0/0") -> tuple`：
 
 ```
-将助记词转换为账户地址与私钥。参考 BIP-39 标准。
+将助记词转换为账户地址与私钥。参考 BIP-32 标准。
 
 参数：
 	Mnemonic (str): 助记词字符串。以空格进行分隔。
+	PassPhrase (str): 助记词密码。默认为 "" 。
+	AccountPath (str): 账户路径。默认为 EVM 地址路径 "m/44'/60'/0'/0/0" 。
 
 返回值：
 	(Address, PrivateKey) (tuple): 由账户地址和私钥组成的元组。当出现异常时返回 None 。
@@ -533,6 +554,50 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 返回值：
 	Result (int): 已转换为以 wei 为单位的值。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.WeiToGwei(Value: int) -> float`：
+
+```
+将一个正整数按照 wei 为单位直接转化为 Gwei 为单位的正整数。即假设传入 Value = 1000000000，将返回 1 。
+
+参数：
+	Value (int): 假设以 wei 为单位的待转换值。
+
+返回值：
+	Result (float): 已转换为以 Gwei 为单位的值。当出现异常时返回 None 。
+```
+
+<br>
+
+`BlockchainUtils.FromWei(Number: int, Unit: str) -> Union[int, decimal.Decimal]`：
+
+```
+Web3.from_wei 的简单封装。
+
+参数：
+	Number (int): 待转换值。
+	Unit (str): 原单位名称。
+
+返回值：
+	Result (Union[int, decimal.Decimal]): 转换后的值。
+```
+
+<br>
+
+`BlockchainUtils.ToWei(Number: Union[int, float, str, decimal.Decimal], Unit: str) -> int`：
+
+```
+Web3.to_wei 的简单封装。
+
+参数：
+	Number (Union[int, float, str, decimal.Decimal]): 待转换值。
+	Unit (str): 原单位名称。
+
+返回值：
+	Result (int): 转换后的值。
 ```
 
 <br>
@@ -565,7 +630,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 
 <br>
 
-`BlockchainUtils.SignatureToRSV(Signature: str) -> dict`：
+`BlockchainUtils.SignatureToRSV(Signature: str) -> SignatureData`：
 
 ```
 将签名解析成 R S V 。
@@ -574,13 +639,13 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 	Signature (str): 签名。含 0x 前缀的十六进制形式。
 
 返回值：
-	Result (dict): 解析结果。当出现异常时返回 None 。
+	Result (SignatureData): 解析结果。当出现异常时返回 None 。
 	{"Signature"|"R"|"S"|"V"}
 ```
 
 <br>
 
-`BlockchainUtils.RSVToSignature(R: str, S: str, V: int) -> dict`：
+`BlockchainUtils.RSVToSignature(R: str, S: str, V: str) -> SignatureData`：
 
 ```
 将 R S V 合并成签名。
@@ -591,7 +656,7 @@ Contract 是合约实例，作为与指定合约进行交互的基础。
 	V (int): 签名 v 值。含 0x 前缀的十六进制形式。
 
 返回值：
-	Result (dict): 合并结果。当出现异常时返回 None 。
+	Result (SignatureData): 合并结果。当出现异常时返回 None 。
 	{"Signature"|"R"|"S"|"V"}
 ```
 
@@ -1438,6 +1503,47 @@ from Poseidon.PoW import PoWUtils
 
 <br>
 
+`ProofOfWork_SHA256_Suffix(Url: str, Port: int, SuffixBegin: str, SuffixEnd: str, SuffixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 SHA256 的后缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 SHA256 值的后缀与给出的 SHA256 后缀相等。
+
+参数：
+    Url (str): 题目环境的链接地址
+    Port (int): 题目环境的端口号
+    SuffixBegin (str): 哈希值后缀之前的字符串
+    SuffixEnd (str): 哈希值后缀之后的字符串
+    SuffixLength (int): 哈希值后缀的字符串的长度
+    MaxTextLength (int): 待求解的字符串的最大长度
+    SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+    Connection (pwn.remote): 与服务器建立的连接对象
+```
+
+<br>
+
+`ProofOfWork_SHA256_StartWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, StartWithZeroLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 SHA256 值的二进制形式中开头所包含的 0 的个数为（StartWithZeroLength:int）。
+
+参数：
+    Url (str): 题目环境的链接地址
+    Port (int): 题目环境的端口号
+    KnownBegin (str): 已知部分之前的字符串
+    KnownEnd (str): 已知部分之后的字符串
+    UnknownLength (int): 未知部分的字符串的长度
+    StartWithZeroLength (int): SHA256 值的二进制形式中开头所包含的 0 的个数
+    SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+    Connection (pwn.remote): 与服务器建立的连接对象
+
+```
+
+<br>
+
 `ProofOfWork_SHA256_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote`：
 
 ```
@@ -1493,6 +1599,48 @@ from Poseidon.PoW import PoWUtils
 
 返回值：
 	Connection (pwn.remote): 与服务器建立的连接对象
+```
+
+<br>
+
+`ProofOfWork_MD5_Suffix(Url: str, Port: int, SuffixBegin: str, SuffixEnd: str, SuffixLength: int, MaxTextLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 MD5 的后缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 MD5 值的后缀与给出的 MD5 后缀相等。
+
+参数：
+    Url (str): 题目环境的链接地址
+    Port (int): 题目环境的端口号
+    SuffixBegin (str): 哈希值后缀之前的字符串
+    SuffixEnd (str): 哈希值后缀之后的字符串
+    SuffixLength (int): 哈希值后缀的字符串的长度
+    MaxTextLength (int): 待求解的字符串的最大长度
+    SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+    Connection (pwn.remote): 与服务器建立的连接对象
+
+```
+
+<br>
+
+`ProofOfWork_MD5_StartWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, StartWithZeroLength: int, SendAfter: str) -> remote`：
+
+```
+用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 MD5 值的二进制形式中开头所包含的 0 的个数为（StartWithZeroLength:int）。
+
+参数：
+    Url (str): 题目环境的链接地址
+    Port (int): 题目环境的端口号
+    KnownBegin (str): 已知部分之前的字符串
+    KnownEnd (str): 已知部分之后的字符串
+    UnknownLength (int): 未知部分的字符串的长度
+    StartWithZeroLength (int): MD5 值的二进制形式中开头所包含的 0 的个数
+    SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+返回值：
+    Connection (pwn.remote): 与服务器建立的连接对象
+
 ```
 
 <br>

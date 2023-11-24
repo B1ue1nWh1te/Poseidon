@@ -64,6 +64,58 @@ class PoWUtils():
         return Connection
 
     @staticmethod
+    def ProofOfWork_SHA256_Suffix(Url: str, Port: int, SuffixBegin: str, SuffixEnd: str, SuffixLength: int, MaxTextLength: int, SendAfter: str) -> remote:
+        """
+        用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 SHA256 的后缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 SHA256 值的后缀与给出的 SHA256 后缀相等。
+
+        参数：
+            Url (str): 题目环境的链接地址
+            Port (int): 题目环境的端口号
+            SuffixBegin (str): 哈希值后缀之前的字符串
+            SuffixEnd (str): 哈希值后缀之后的字符串
+            SuffixLength (int): 哈希值后缀的字符串的长度
+            MaxTextLength (int): 待求解的字符串的最大长度
+            SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+        返回值：
+            Connection (pwn.remote): 与服务器建立的连接对象
+        """
+
+        Connection = remote(Url, Port)
+        Connection.recvuntil(SuffixBegin)
+        Suffix = Connection.recvuntil(SuffixEnd, drop=True).decode().strip()
+        Charset = string.printable
+        Proof = mbruteforce(lambda x: hashlib.sha256((x).encode()).hexdigest()[:SuffixLength] == Suffix, Charset, MaxTextLength, method='upto')
+        Connection.sendlineafter(SendAfter, Proof)
+        return Connection
+
+    @staticmethod
+    def ProofOfWork_SHA256_StartWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, StartWithZeroLength: int, SendAfter: str) -> remote:
+        """
+        用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 SHA256 值的二进制形式中开头所包含的 0 的个数为（StartWithZeroLength:int）。
+
+        参数：
+            Url (str): 题目环境的链接地址
+            Port (int): 题目环境的端口号
+            KnownBegin (str): 已知部分之前的字符串
+            KnownEnd (str): 已知部分之后的字符串
+            UnknownLength (int): 未知部分的字符串的长度
+            StartWithZeroLength (int): SHA256 值的二进制形式中开头所包含的 0 的个数
+            SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+        返回值：
+            Connection (pwn.remote): 与服务器建立的连接对象
+        """
+
+        Connection = remote(Url, Port)
+        Connection.recvuntil(KnownBegin)
+        Known = Connection.recvuntil(KnownEnd, drop=True).decode().strip()
+        Charset = string.printable
+        Proof = mbruteforce(lambda x: bin(int(hashlib.sha256((Known + x).encode()).hexdigest(), 16)).startswith('0' * StartWithZeroLength), Charset, UnknownLength, method='fixed')
+        Connection.sendlineafter(SendAfter, Proof)
+        return Connection
+
+    @staticmethod
     def ProofOfWork_SHA256_EndWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, EndWithZeroLength: int, SendAfter: str) -> remote:
         """
         用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 SHA256 值的二进制形式中末尾所包含的 0 的个数为（EndWithZeroLength:int）。
@@ -137,6 +189,58 @@ class PoWUtils():
         Prefix = Connection.recvuntil(PrefixEnd, drop=True).decode().strip()
         Charset = string.printable
         Proof = mbruteforce(lambda x: hashlib.md5((x).encode()).hexdigest()[:PrefixLength] == Prefix, Charset, MaxTextLength, method='upto')
+        Connection.sendlineafter(SendAfter, Proof)
+        return Connection
+
+    @staticmethod
+    def ProofOfWork_MD5_Suffix(Url: str, Port: int, SuffixBegin: str, SuffixEnd: str, SuffixLength: int, MaxTextLength: int, SendAfter: str) -> remote:
+        """
+        用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了 MD5 的后缀值，求一个最大长度不超过参数 (MaxTextLength:int) 的字符串使得其 MD5 值的后缀与给出的 MD5 后缀相等。
+
+        参数：
+            Url (str): 题目环境的链接地址
+            Port (int): 题目环境的端口号
+            SuffixBegin (str): 哈希值后缀之前的字符串
+            SuffixEnd (str): 哈希值后缀之后的字符串
+            SuffixLength (int): 哈希值后缀的字符串的长度
+            MaxTextLength (int): 待求解的字符串的最大长度
+            SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+        返回值：
+            Connection (pwn.remote): 与服务器建立的连接对象
+        """
+
+        Connection = remote(Url, Port)
+        Connection.recvuntil(SuffixBegin)
+        Suffix = Connection.recvuntil(SuffixEnd, drop=True).decode().strip()
+        Charset = string.printable
+        Proof = mbruteforce(lambda x: hashlib.md5((x).encode()).hexdigest()[:SuffixLength] == Suffix, Charset, MaxTextLength, method='upto')
+        Connection.sendlineafter(SendAfter, Proof)
+        return Connection
+
+    @staticmethod
+    def ProofOfWork_MD5_StartWithZero(Url: str, Port: int, KnownBegin: str, KnownEnd: str, UnknownLength: int, StartWithZeroLength: int, SendAfter: str) -> remote:
+        """
+        用于解决连接题目环境时可能遇到的工作量证明问题，这一函数可处理以下情况：给出了原文的前一部分，剩下长度（UnknownLength:int）的部分未知，要求解出未知部分的字符串，以使得与已知部分拼接得到的字符串的 MD5 值的二进制形式中开头所包含的 0 的个数为（StartWithZeroLength:int）。
+
+        参数：
+            Url (str): 题目环境的链接地址
+            Port (int): 题目环境的端口号
+            KnownBegin (str): 已知部分之前的字符串
+            KnownEnd (str): 已知部分之后的字符串
+            UnknownLength (int): 未知部分的字符串的长度
+            StartWithZeroLength (int): MD5 值的二进制形式中开头所包含的 0 的个数
+            SendAfter (str): 在接收到这个参数所指明的字符串后才将求解出的字符串发送给服务器
+
+        返回值：
+            Connection (pwn.remote): 与服务器建立的连接对象
+        """
+
+        Connection = remote(Url, Port)
+        Connection.recvuntil(KnownBegin)
+        Known = Connection.recvuntil(KnownEnd, drop=True).decode().strip()
+        Charset = string.printable
+        Proof = mbruteforce(lambda x: bin(int(hashlib.md5((Known + x).encode()).hexdigest(), 16)).startswith('0' * StartWithZeroLength), Charset, UnknownLength, method='fixed')
         Connection.sendlineafter(SendAfter, Proof)
         return Connection
 
