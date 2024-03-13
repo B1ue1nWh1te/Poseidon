@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "poseidon-python"
+version = "1.2.0"
+description = "海神波塞冬工具对常用的链上交互操作进行了封装，使得开发者能够便捷地与任何以太坊同构链交互，主要用于在 CTF 比赛中攻克 Blockchain 方向的题目。"
+authors = ["B1ue1nWh1te <b1ue1nwh1te@skiff.com>"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+web3 = "^6.15.1"
+py-solc-x = "^2.0.2"
+pyevmasm = "^0.2.3"
+loguru = "^0.7.2"
+pycryptodome = "^3.20.0"
+gmpy2 = "^2.1.5"
+pwntools = "^4.12.0"
+
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "default"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
