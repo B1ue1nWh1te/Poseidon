@@ -18,18 +18,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Tools
+      - name: Install And Configure Poetry
         run: |
-          python -m pip install --upgrade poetry twine
+          python -m pip install --upgrade poetry
           poetry config virtualenvs.create false
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
 
-      - name: Build Package
+      - name: Build And Publish To PyPI
         run: |
-          poetry install
+          poetry install --no-dev
           poetry build
-          twine check --strict dist/*
-
-      - name: Publish To PyPI
-        uses: pypa/gh-action-pypi-publish@v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          poetry publish

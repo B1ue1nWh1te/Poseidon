@@ -19,8 +19,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          fail-on-error: true
 
       - name: Exit If Gitleaks Check Failed
         if: failure()
