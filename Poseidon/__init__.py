@@ -1,6 +1,13 @@
-import pkg_resources
+from importlib.metadata import version
 
-__title__ = 'poseidon-python'
-__version__ = pkg_resources.get_distribution("poseidon-python").version
-__license__ = 'GPL-3.0'
-__author__ = 'B1ue1nWh1te'
+__version__ = version("poseidon-python")
+
+from Poseidon.EVM import (Chain, Account, Contract, Utils)
+
+__all__ = [
+    "__version__",
+    "Chain",
+    "Account",
+    "Contract",
+    "Utils",
+]

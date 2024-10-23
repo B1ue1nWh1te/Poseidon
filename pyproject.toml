@@ -1,26 +1,44 @@
 [tool.poetry]
 name = "poseidon-python"
-version = "1.2.0"
-description = "海神波塞冬工具对常用的链上交互操作进行了封装，使得开发者能够便捷地与任何以太坊同构链交互，主要用于在 CTF 比赛中攻克 Blockchain 方向的题目。"
-authors = ["B1ue1nWh1te <b1ue1nwh1te@skiff.com>"]
+version = "2.0.0"
+description = "海神波塞冬，本工具库基于 web3.py 对常用的链上交互操作进行了封装，让开发者能够便捷地与任意 EVM 链发起交互。"
+keywords = ["blockchain", "web3", "ethereum", "evm", "tooling"]
+authors = ["B1ue1nWh1te <themagicdeepsea@gmail.com>"]
+repository = "https://github.com/B1ue1nWh1te/Poseidon"
+documentation = "https://seaverse.gitbook.io/poseidon"
+packages = [{ include = "Poseidon" }]
+include = ["Poseidon/py.typed"]
 license = "GPL-3.0"
 readme = "README.md"
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: Chinese (Simplified)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-web3 = "^6.15.1"
-py-solc-x = "^2.0.2"
+python = ">=3.9, <4"
+web3 = "^7.4.0"
+py-solc-x = "^2.0.3"
+multicall = "^0.9.0"
 pyevmasm = "^0.2.3"
 loguru = "^0.7.2"
-pycryptodome = "^3.20.0"
-gmpy2 = "^2.1.5"
-pwntools = "^4.12.0"
 
+[tool.poetry.group.dev.dependencies]
+bandit = "^1.7.10"
+python-dotenv = "^1.0.1"
 
 [[tool.poetry.source]]
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-priority = "default"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core"]

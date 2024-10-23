@@ -999,7 +999,7 @@ class Contract():
             return None
 
 
-class BlockchainUtils():
+class Utils():
     """
     通用工具集，整合了常用的链下操作。静态类，无需实例化。
     """
