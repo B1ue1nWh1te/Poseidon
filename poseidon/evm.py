@@ -106,7 +106,7 @@ class Chain():
 
         from time import time
         from web3 import HTTPProvider
-        from web3.middleware import geth_poa_middleware
+        from web3.middleware.geth_poa import geth_poa_middleware
         RequestParamsPrint = f"[RequestParams]{RequestParams}\n" if RequestParams else ""
         StartTime = time()
         self.Node = Web3(HTTPProvider(RPCUrl, request_kwargs=RequestParams))
