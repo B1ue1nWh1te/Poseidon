@@ -2,12 +2,12 @@ from importlib.metadata import version
 
 __version__ = version("poseidon-python")
 
-from poseidon.evm import (Chain, Account, Contract, Utils)
+from poseidon import evm, ton, solana, sui
 
 __all__ = [
     "__version__",
-    "Chain",
-    "Account",
-    "Contract",
-    "Utils",
+    "evm",
+    "ton",
+    "solana",
+    "sui"
 ]
