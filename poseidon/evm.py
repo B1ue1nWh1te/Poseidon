@@ -11,7 +11,7 @@ from time import time
 from traceback import format_exc
 
 from eth_account import Account as EthAccount
-from eth_account.messages import encode_defunct
+from eth_account.messages import encode_defunct, encode_typed_data, _hash_eip191_message
 from web3 import HTTPProvider, utils, Web3
 from web3.middleware.geth_poa import geth_poa_middleware
 from pyevmasm import assemble_hex, disassemble_hex
@@ -143,6 +143,7 @@ class Chain:
             chain_information (poseidon.evm.ChainInformationData): EVM 链基本信息
             {"chain_id"|"block_number"|"gas_price"|("timeslot")|("client_version")}
         """
+
         chain_id = self.chain_id
         block_number = self.eth.block_number
         gas_price = self.eth.gas_price
@@ -157,7 +158,7 @@ class Chain:
             client_version = self.provider.client_version
             client_version_print = f"[client_version]{client_version}"
 
-        chain_information: ChainInformationData = ChainInformationData(**{
+        chain_information = ChainInformationData(**{
             "chain_id": chain_id,
             "block_number": block_number,
             "gas_price": gas_price,
@@ -169,15 +170,15 @@ class Chain:
         )
         return chain_information
 
-    def get_block_information(self, block_id: BlockIdentifier) -> BlockInformationData:
+    def get_block_information(self, block_id: BlockIdentifier) -> Optional[BlockInformationData]:
         """
         根据区块 ID 获取该区块基本信息。
 
         参数：
-            block_id (web3.types.BlockIdentifier): 区块 ID (可为具体区块号、区块哈希或 'latest','earliest'，'pending' 等标识符)
+            block_id (web3.types.BlockIdentifier): 区块 ID (可为具体区块号、区块哈希或 'latest','earliest','pending' 等标识符)
 
         返回值：
-            block_information (poseidon.evm.BlockInformationData): 区块基本信息
+            block_information (Optional[BlockInformationData]): 区块基本信息
             {"block_hash"|"block_number"|"timestamp"|"miner"|"gas_used"|"gas_limit"|"transactions"}
         """
 
@@ -191,7 +192,7 @@ class Chain:
             gas_limit = info.get("gasLimit")
             transactions = info.get("transactions")
 
-            block_information: BlockInformationData = BlockInformationData(**{
+            block_information = BlockInformationData(**{
                 "block_hash": block_hash,
                 "block_number": block_number,
                 "timestamp": timestamp,
@@ -209,9 +210,9 @@ class Chain:
             logger.error(
                 f"\n[Chain][get_block_information]Failed\n[block_id]{block_id}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return BlockInformationData(**{})
+            return None
 
-    def get_transaction_receipt_by_hash(self, transaction_hash: _Hash32) -> TransactionReceiptData:
+    def get_transaction_receipt_by_hash(self, transaction_hash: _Hash32) -> Optional[TransactionReceiptData]:
         """
         根据交易哈希获取该交易的回执信息。
 
@@ -219,7 +220,7 @@ class Chain:
             transaction_hash (web3.types._Hash32): 交易哈希
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
 
@@ -250,7 +251,7 @@ class Chain:
             s = HexBytes(info.get("s", ""))
             v = HexBytes(hex(info.get("v", 0)))
 
-            transaction_receipt: TransactionReceiptData = TransactionReceiptData(**{
+            transaction_receipt = TransactionReceiptData(**{
                 "transaction_hash": _transaction_hash,
                 "block_number": block_number,
                 "transaction_index": transaction_index,
@@ -294,18 +295,18 @@ class Chain:
             logger.error(
                 f"\n[Chain][get_transaction_receipt_by_hash]Failed\n[transaction_hash]{transaction_hash}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return TransactionReceiptData(**{})
+            return None
 
-    def get_transaction_information_by_block_id_and_index(self, block_id: BlockIdentifier, transaction_index: int) -> TransactionReceiptData:
+    def get_transaction_information_by_block_id_and_index(self, block_id: BlockIdentifier, transaction_index: int) -> Optional[TransactionReceiptData]:
         """
         根据区块 ID 和索引来获取该交易的回执信息。
 
         参数：
-            block_id (web3.types.BlockIdentifier): 区块 ID (可为具体区块号、区块哈希或 'latest','earliest'，'pending' 等标识符)
+            block_id (web3.types.BlockIdentifier): 区块 ID (可为具体区块号、区块哈希或 'latest','earliest','pending' 等标识符)
             transaction_index (int): 索引
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
 
@@ -336,7 +337,7 @@ class Chain:
             contract_address = info.get("contractAddress")
             logs = info.get("logs")
 
-            transaction_information: TransactionReceiptData = TransactionReceiptData(**{
+            transaction_information = TransactionReceiptData(**{
                 "transaction_hash": transaction_hash,
                 "block_number": block_number,
                 "transaction_index": _transaction_index,
@@ -380,9 +381,9 @@ class Chain:
             logger.error(
                 f"\n[Chain][get_transaction_information_by_block_id_and_index]Failed\n[block_id]{block_id}\n[transaction_index]{transaction_index}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return TransactionReceiptData(**{})
+            return None
 
-    def get_balance(self, address: ChecksumAddress) -> Wei:
+    def get_balance(self, address: ChecksumAddress) -> Optional[Wei]:
         """
         根据账户地址获取其原生代币余额。
 
@@ -390,7 +391,7 @@ class Chain:
             address (eth_typing.ChecksumAddress): 账户地址
 
         返回值：
-            balance (web3.types.Wei): 账户原生代币余额
+            balance (Optional[Wei]): 账户原生代币余额
         """
 
         try:
@@ -403,9 +404,9 @@ class Chain:
         except Exception:
             exception_information = format_exc()
             logger.error(f"\n[Chain][get_balance]Failed\n[address]{address}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}")
-            return Wei(0)
+            return None
 
-    def get_code(self, address: ChecksumAddress) -> HexBytes:
+    def get_code(self, address: ChecksumAddress) -> Optional[HexBytes]:
         """
         根据合约地址获取其字节码。
 
@@ -413,7 +414,7 @@ class Chain:
             address (eth_typing.ChecksumAddress): 合约地址
 
         返回值：
-            bytecode (hexbytes.HexBytes): 合约字节码
+            bytecode (Optional[HexBytes]): 合约字节码
         """
 
         try:
@@ -424,9 +425,9 @@ class Chain:
         except Exception:
             exception_information = format_exc()
             logger.error(f"\n[Chain][get_code]Failed\n[address]{address}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}")
-            return HexBytes("")
+            return None
 
-    def get_storage(self, address: ChecksumAddress, slot_index: int) -> HexBytes:
+    def get_storage(self, address: ChecksumAddress, slot_index: int) -> Optional[HexBytes]:
         """
         根据合约地址和存储插槽索引获取存储值。
 
@@ -435,7 +436,7 @@ class Chain:
             slot_index (int): 存储插槽索引
 
         返回值：
-            storage_data (hexbytes.HexBytes): 存储值
+            storage_data (Optional[HexBytes]): 存储值
         """
 
         try:
@@ -450,9 +451,9 @@ class Chain:
             logger.error(
                 f"\n[Chain][get_storage]Failed\n[address]{address}\n[slot_index]{slot_index}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return HexBytes("")
+            return None
 
-    def dump_storage(self, address: ChecksumAddress, start_slot_index: int, end_slot_index: int) -> List[HexBytes]:
+    def dump_storage(self, address: ChecksumAddress, start_slot_index: int, end_slot_index: int) -> Optional[List[HexBytes]]:
         """
         根据合约地址和起止插槽索引，批量获取存储值。
 
@@ -462,7 +463,7 @@ class Chain:
             end_slot_index (int): 终止插槽索引
 
         返回值：
-            storage_data_list (List[HexBytes]): 存储值列表
+            storage_data_list (Optional[List[HexBytes]]): 存储值列表
         """
 
         try:
@@ -477,7 +478,7 @@ class Chain:
             logger.error(
                 f"\n[Chain][dump_storage]Failed\n[address]{address}\n[start_slot_index]{start_slot_index}\n[end_slot_index]{end_slot_index}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return []
+            return None
 
 
 class Account:
@@ -534,12 +535,12 @@ class Account:
             if command == "no" or command == "0" or (len(command) > 0 and command != "yes" and command != "1"):
                 raise Exception("Cancel sending transaction.")
 
-    def get_self_balance(self) -> Wei:
+    def get_self_balance(self) -> Optional[Wei]:
         """
         获取当前账户的原生代币余额。
 
         返回值：
-            balance (web3.types.Wei): 当前账户的原生代币余额
+            balance (Optional[Wei]): 当前账户的原生代币余额
         """
 
         balance = self._chain.get_balance(self.address)
@@ -547,7 +548,7 @@ class Account:
             logger.warning(f"\n[Account][get_self_balance]\n[warning]This account's balance is zero\n{LOG_DIVIDER_LINE}")
         return balance
 
-    def send_transaction(self, to: Optional[ChecksumAddress] = None, data: HexBytes = HexBytes("0x"), value: Wei = Wei(0), gas_price: Optional[Wei] = None, gas_limit: int = 500000) -> TransactionReceiptData:
+    def send_transaction(self, to: Optional[ChecksumAddress] = None, data: HexBytes = HexBytes("0x"), value: Wei = Wei(0), gas_price: Optional[Wei] = None, gas_limit: int = 500000) -> Optional[TransactionReceiptData]:
         """
         发送自定义 EIP-155 交易。
 
@@ -559,7 +560,7 @@ class Account:
             gas_limit (int = 500000): Gas 最大使用量
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
 
@@ -589,9 +590,9 @@ class Account:
             logger.error(
                 f"\n[Account][send_transaction]Failed\n[to]{to}\n[value]{value}\n[data]{data.hex()}\n[gas_price]{gas_price}\n[gas_limit]{gas_limit}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return TransactionReceiptData(**{})
+            return None
 
-    def send_transaction_by_eip1559(self, to: Optional[ChecksumAddress] = None, data: HexBytes = HexBytes("0x"), value: Wei = Wei(0), base_fee: Optional[Wei] = None, max_priority_fee: Optional[Wei] = None, gas_limit: int = 500000) -> TransactionReceiptData:
+    def send_transaction_by_eip1559(self, to: Optional[ChecksumAddress] = None, data: HexBytes = HexBytes("0x"), value: Wei = Wei(0), base_fee: Optional[Wei] = None, max_priority_fee: Optional[Wei] = None, gas_limit: int = 500000) -> Optional[TransactionReceiptData]:
         """
         发送自定义 EIP-1559 交易。
 
@@ -604,9 +605,10 @@ class Account:
             gas_limit (int = 500000): Gas 最大使用量
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
+
         try:
             sender = self.address
             base_fee = base_fee if base_fee else self._chain.eth.gas_price
@@ -637,9 +639,9 @@ class Account:
             logger.error(
                 f"\n[Account][send_transaction_by_eip1559]Failed\n[to]{to}\n[value]{value}\n[data]{data.hex()}\n[base_fee]{base_fee}\n[max_priority_fee]{max_priority_fee}\n[gas_limit]{gas_limit}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return TransactionReceiptData(**{})
+            return None
 
-    def deploy_contract(self, abi: dict, bytecode: HexBytes, value: Wei = Wei(0), gas_price: Optional[Wei] = None, *args: Optional[Any]) -> TransactionReceiptData:
+    def deploy_contract(self, abi: dict, bytecode: HexBytes, value: Wei = Wei(0), gas_price: Optional[Wei] = None, *args: Optional[Any]) -> Optional[TransactionReceiptData]:
         """
         部署合约。
 
@@ -651,7 +653,7 @@ class Account:
             *args (Optional[Any]): 传给合约构造函数的参数
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             当合约部署成功时，返回值中会额外添加"contract"字段，该变量是 poseidon.evm.Contract 实例，若失败则为 None。
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address"&"contract")|"logs"|"input_data"|"r"|"s"|"v"|"contract"}
         """
@@ -677,11 +679,12 @@ class Account:
             logger.info(f"\n[Account][deploy_contract][pending...]\n[transaction_hash]{transaction_hash.hex()}\n{LOG_DIVIDER_LINE}")
             transaction_receipt = self._chain.get_transaction_receipt_by_hash(transaction_hash)
 
-            if transaction_receipt.transaction_status and transaction_receipt.contract_address:
-                deployed_contract = Contract(self, transaction_receipt.contract_address, abi)
-                transaction_receipt.contract = deployed_contract
-            else:
-                transaction_receipt.contract = None
+            if transaction_receipt:
+                if transaction_receipt.transaction_status and transaction_receipt.contract_address:
+                    deployed_contract = Contract(self, transaction_receipt.contract_address, abi)
+                    transaction_receipt.contract = deployed_contract
+                else:
+                    transaction_receipt.contract = None
 
             return transaction_receipt
         except Exception:
@@ -689,9 +692,9 @@ class Account:
             logger.error(
                 f"\n[Account][deploy_contract]Failed\n[value]{value}\n[gas_price]{gas_price}\n[abi]{abi}\n[bytecode]{bytecode.hex()}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return TransactionReceiptData(**{})
+            return None
 
-    def sign_message_string(self, message: str) -> SignedMessageData:
+    def sign_message_string(self, message: str) -> Optional[SignedMessageData]:
         """
         对消息字符串进行签名。
 
@@ -699,7 +702,7 @@ class Account:
             message (str): 待签名消息字符串
 
         返回值：
-            signed_message_data (poseidon.evm.SignedMessageData): 签名数据
+            signed_message_data (Optional[SignedMessageData]): 签名数据
             {"message_hash"|"message"|"signer"|"signature_data"}
         """
 
@@ -711,7 +714,7 @@ class Account:
             r = HexBytes(hex(signed_message.r))
             s = HexBytes(hex(signed_message.s))
             v = HexBytes(hex(signed_message.v))
-            signed_message_data: SignedMessageData = SignedMessageData(**{
+            signed_message_data = SignedMessageData(**{
                 "message_hash": message_hash,
                 "message": message,
                 "signer": signer,
@@ -731,9 +734,9 @@ class Account:
             logger.error(
                 f"\n[Account][sign_message_string]Failed to sign message\n[message]{message}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return SignedMessageData(**{})
+            return None
 
-    def sign_message_hash(self, message_hash: HexBytes) -> SignedMessageData:
+    def sign_message_hash(self, message_hash: HexBytes) -> Optional[SignedMessageData]:
         """
         对消息哈希进行签名。
 
@@ -741,7 +744,7 @@ class Account:
             message_hash (hexbytes.HexBytes): 待签名消息哈希
 
         返回值：
-            signed_message_data (poseidon.evm.SignedMessageData): 签名数据
+            signed_message_data (Optional[SignedMessageData]): 签名数据
             {"message_hash"|"message"|"signer"|"signature_data"}
         """
 
@@ -753,7 +756,7 @@ class Account:
             r = HexBytes(hex(signed_message.r))
             s = HexBytes(hex(signed_message.s))
             v = HexBytes(hex(signed_message.v))
-            signed_message_data: SignedMessageData = SignedMessageData(**{
+            signed_message_data = SignedMessageData(**{
                 "message_hash": _message_hash,
                 "message": None,
                 "signer": signer,
@@ -773,7 +776,52 @@ class Account:
             logger.error(
                 f"\n[Account][sign_message_hash]Failed\n[message_hash]{message_hash}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            return SignedMessageData(**{})
+            return None
+
+    def sign_typed_message(self, domain_data: dict, message_types: dict, message_data: dict) -> Optional[SignedMessageData]:
+        """
+        对结构化消息数据进行 EIP-712 签名。
+
+        参数：
+            domain_data (dict): 域数据
+            message_types (dict): 消息类型定义
+            message_data (dict): 待签名的消息数据
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signer = self.eth_account.address
+            signable_message = encode_typed_data(domain_data, message_types, message_data)
+            signed_message: SignedMessage = self.eth_account.sign_message(signable_message)
+            message_hash = signed_message.messageHash
+            signature = signed_message.signature
+            r = HexBytes(hex(signed_message.r))
+            s = HexBytes(hex(signed_message.s))
+            v = HexBytes(hex(signed_message.v))
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": str(message_data),
+                "signer": signer,
+                "signature_data": SignatureData(**{
+                    "signature": signature,
+                    "r": r,
+                    "s": s,
+                    "v": v
+                })
+            })
+            logger.success(
+                f"\n[Account][sign_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message_data}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+            )
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Account][sign_typed_message]Failed\n[domain_data]{domain_data}\n[message_data]{message_data}\n[message_types]{message_types}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
 
 
 class Contract:
@@ -808,7 +856,7 @@ class Contract:
             )
             raise Exception("Failed to instantiate contract.")
 
-    def call_function(self, function_name: str, *args: Optional[Any]) -> TransactionReceiptData:
+    def call_function(self, function_name: str, *args: Optional[Any]) -> Optional[TransactionReceiptData]:
         """
         通过传入函数名称及参数来调用该合约内的函数。
 
@@ -817,7 +865,7 @@ class Contract:
             *args (Optional[Any]): 函数参数
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
 
@@ -826,7 +874,7 @@ class Contract:
         transaction_receipt = self._account.send_transaction(self.address, transaction_data["data"], transaction_data["value"], transaction_data["gasPrice"], transaction_data["gas"])
         return transaction_receipt
 
-    def call_function_with_parameters(self, value: Wei, gas_price: Optional[Wei], gas_limit: int, function_name: str, *args: Optional[Any]) -> TransactionReceiptData:
+    def call_function_with_parameters(self, value: Wei, gas_price: Optional[Wei], gas_limit: int, function_name: str, *args: Optional[Any]) -> Optional[TransactionReceiptData]:
         """
         通过传入函数名称及参数来调用该合约内的函数。
 
@@ -838,7 +886,7 @@ class Contract:
             *args (Optional[Any]): 函数参数
 
         返回值：
-            transaction_receipt (poseidon.evm.TransactionReceiptData): 交易回执信息
+            transaction_receipt (Optional[TransactionReceiptData]): 交易回执信息
             {"transaction_hash"|"block_number"|"transaction_index"|"transaction_status"|"transaction_type"|"action"|"sender"|"to"|"nonce"|"value"|"gas_used"|"gas_limit"|<"gas_price"|("max_fee_per_gas"&"max_priority_fee_per_gas"&"effective_gas_price")>|("contract_address")|"logs"|"input_data"|"r"|"s"|"v"}
         """
 
@@ -937,6 +985,7 @@ class Utils:
         参数：
             solidity_version (str): Solidity 版本号
         """
+
         try:
             install_solc(solidity_version, show_progress=True)
             set_solc_version(solidity_version)
@@ -949,7 +998,7 @@ class Utils:
             )
 
     @staticmethod
-    def compile(file_path: str, contract_name: str, solidity_version: Optional[str] = None, evm_version: Optional[str] = None, optimize: bool = False, optimize_runs: int = 200, base_path: Optional[str] = None, allow_paths: Optional[str] = None) -> Tuple[dict, HexBytes]:
+    def compile(file_path: str, contract_name: str, solidity_version: Optional[str] = None, evm_version: Optional[str] = None, optimize: bool = False, optimize_runs: int = 200, base_path: Optional[str] = None, allow_paths: Optional[str] = None) -> Optional[Tuple[dict, HexBytes]]:
         """
         根据给定的参数使用 py-solc-x 编译合约。
 
@@ -964,8 +1013,9 @@ class Utils:
             allow_paths (Optional[str] = None): 指定许可路径
 
         返回值：
-            contract_data (Tuple[dict, HexBytes]): 由 ABI 和 Bytecode 组成的元组
+            contract_data (Optional[Tuple[dict, HexBytes]]): 由 ABI 和 Bytecode 组成的元组
         """
+
         try:
             with open(file_path, "r", encoding="utf-8") as sol:
                 compiled_sol = compile_source(
@@ -994,7 +1044,7 @@ class Utils:
             logger.error(
                 f"\n[Utils][compile]Failed\n[file_path]{file_path}\n[contract_name]{contract_name}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            raise Exception("Failed to compile the contract.")
+            return None
 
     @staticmethod
     def import_abi(file_path: str) -> Optional[dict]:
@@ -1007,6 +1057,7 @@ class Utils:
         返回值：
             abi (Optional[dict]): ABI 内容
         """
+
         try:
             with open(file_path, 'r', encoding="utf-8") as f:
                 abi = load(f)
@@ -1020,13 +1071,14 @@ class Utils:
             return None
 
     @staticmethod
-    def create_new_account() -> Tuple[ChecksumAddress, HexBytes]:
+    def create_new_account() -> Optional[Tuple[ChecksumAddress, HexBytes]]:
         """
         创建新账户。
 
         返回值：
             account_data (Tuple[ChecksumAddress, HexBytes]): 由账户地址和私钥组成的元组
         """
+
         try:
             account: LocalAccount = EthAccount.create()
             address = Web3.to_checksum_address(account.address)
@@ -1039,10 +1091,10 @@ class Utils:
             logger.error(
                 f"\n[Utils][create_new_account]Failed\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            raise Exception("Failed to create new account.")
+            return None
 
     @staticmethod
-    def mnemonic_to_account_data(mnemonic: str, passphrase: str = "", account_path: str = "m/44'/60'/0'/0/0") -> Tuple[ChecksumAddress, HexBytes]:
+    def mnemonic_to_account_data(mnemonic: str, passphrase: str = "", account_path: str = "m/44'/60'/0'/0/0") -> Optional[Tuple[ChecksumAddress, HexBytes]]:
         """
         将助记词转换为账户地址与私钥。参考 BIP-39 标准。
 
@@ -1052,8 +1104,9 @@ class Utils:
             account_path (str = "m/44'/60'/0'/0/0"): HD账户路径
 
         返回值：
-            account_data (Tuple[ChecksumAddress, HexBytes]): 由账户地址和私钥组成的元组
+            account_data (Optional[Tuple[ChecksumAddress, HexBytes]]): 由账户地址和私钥组成的元组
         """
+
         try:
             EthAccount.enable_unaudited_hdwallet_features()
             account = EthAccount.from_mnemonic(mnemonic, passphrase, account_path)
@@ -1069,10 +1122,10 @@ class Utils:
             logger.error(
                 f"\n[Utils][mnemonic_to_address_and_private_key]Failed\n[mnemonic]{mnemonic}\n[passphrase]{passphrase}\n[account_path]{account_path}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            raise Exception("Failed to convert mnemonic.")
+            return None
 
     @staticmethod
-    def get_contract_address_by_create(deployer: ChecksumAddress, nonce: Nonce) -> ChecksumAddress:
+    def get_contract_address_by_create(deployer: ChecksumAddress, nonce: Nonce) -> Optional[ChecksumAddress]:
         """
         获取某账户以 CREATE 方式部署的合约的地址。
 
@@ -1081,7 +1134,7 @@ class Utils:
             nonce (web3.types.Nonce): 部署者发送合约部署交易的 nonce 值
 
         返回值：
-            address (eth_typing.ChecksumAddress): 计算出的合约地址
+            address (Optional[ChecksumAddress]): 计算出的合约地址
         """
 
         try:
@@ -1095,10 +1148,10 @@ class Utils:
             logger.error(
                 f"\n[Utils][get_contract_address_by_create]Failed\n[deployer]{deployer}\n[nonce]{nonce}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            raise Exception("Failed to calculate contract address.")
+            return None
 
     @staticmethod
-    def get_contract_address_by_create2(deployer: ChecksumAddress, salt: HexStr, creation_code: HexStr) -> ChecksumAddress:
+    def get_contract_address_by_create2(deployer: ChecksumAddress, salt: HexStr, creation_code: HexStr) -> Optional[ChecksumAddress]:
         """
         获取某合约账户以 CREATE2 方式部署的另一个合约的地址。
 
@@ -1108,8 +1161,9 @@ class Utils:
             creation_code (eth_typing.encoding.HexStr): 合约的创建时字节码（与运行时字节码不同）
 
         返回值：
-            address (eth_typing.ChecksumAddress): 计算出的合约地址
+            address (Optional[ChecksumAddress]): 计算出的合约地址
         """
+
         try:
             address = utils.address.get_create2_address(deployer, salt, creation_code)
             logger.success(
@@ -1121,166 +1175,185 @@ class Utils:
             logger.error(
                 f"\n[Utils][get_contract_address_by_create2]Failed\n[deployer]{deployer}\n[salt]{salt}\n[creation_code]{creation_code}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
-            raise Exception("Failed to calculate contract address.")
+            return None
 
     @staticmethod
-    def AssemblyToBytecode(Assembly: str) -> str:
+    def assembly_to_bytecode(assembly: str) -> Optional[HexBytes]:
         """
         将 EVM Assembly 转为 EVM Bytecode 。
 
         参数：
-            Assembly (str): EVM Assembly
+            assembly (str): EVM Assembly
 
         返回值：
-            Bytecode (str): EVM Bytecode 。含 0x 前缀的六进制形式。当出现异常时返回 None 。
+            bytecode (Optional[HexBytes]): EVM Bytecode
         """
 
         try:
-            Bytecode = assemble_hex(Assembly)
-            logger.success(f"\n[BlockchainUtils][AssemblyToBytecode]\n[Bytecode]{Bytecode}\n{LOG_DIVIDER_LINE}")
-            return Bytecode
+            bytecode = HexBytes(assemble_hex(assembly))
+            logger.success(f"\n[Utils][assembly_to_bytecode]\n[bytecode]{bytecode.hex()}\n{LOG_DIVIDER_LINE}")
+            return bytecode
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][AssemblyToBytecod]Failed\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][assembly_to_bytecode]Failed\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
     @staticmethod
-    def BytecodeToAssembly(Bytecode: str) -> str:
+    def bytecode_to_assembly(bytecode: HexBytes) -> Optional[str]:
         """
         将 EVM Bytecode 转为 EVM Assembly 。
 
         参数：
-            Bytecode (str): EVM Bytecode 。含 0x 前缀的十六进制形式。
+            bytecode (hexbytes.HexBytes): EVM Bytecode
 
         返回值：
-            Assembly (str): EVM Assembly 。当出现异常时返回 None 。
+            assembly (Optional[str]): EVM Assembly 
         """
 
         try:
-            Assembly = disassemble_hex(Bytecode)
-            logger.success(f"\n[BlockchainUtils][AssemblyToBytecode]\n[Assembly]\n{Assembly}\n{LOG_DIVIDER_LINE}")
-            return Assembly
+            assembly = disassemble_hex(bytecode)
+            logger.success(f"\n[Utils][bytecode_to_assembly]\n[assembly]\n{assembly}\n{LOG_DIVIDER_LINE}")
+            return assembly
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][BytecodeToAssembly]Failed\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][bytecode_to_assembly]Failed\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
     @staticmethod
-    def SignatureToRSV(Signature: str) -> SignatureData:
+    def signature_to_rsv(signature: HexBytes) -> Optional[SignatureData]:
         """
-        将签名解析成 R S V 。
+        将签名解析成 R,S,V 。
 
         参数：
-            Signature (str): 签名。含 0x 前缀的十六进制形式。
+            signature (hexbytes.HexBytes): 签名数据
 
         返回值：
-            Result (SignatureData): 解析结果。当出现异常时返回 None 。
-            {"Signature"|"R"|"S"|"V"}
+            result (Optional[SignatureData]): 解析结果
+            {"signature"|"r"|"s"|"v"}
         """
 
         try:
-            Signature = hex(int(Signature, 16))
-            assert (len(Signature) == 130 + 2)
-            R, S, V = '0x' + Signature[2:66], '0x' + Signature[66:-2], '0x' + Signature[-2:]
-            logger.success(f"\n[BlockchainUtils][SignatureToRSV]\n[Signature]{Signature}\n[R]{R}\n[S]{S}\n[V]{V}\n{LOG_DIVIDER_LINE}")
-            Result: SignatureData = SignatureData(**{
-                "Signature": Signature,
-                "R": R,
-                "S": S,
-                "V": V
+            _signature = signature.hex()
+            assert (len(_signature) == 130 + 2)
+            r = HexBytes('0x' + _signature[2:66])
+            s = HexBytes('0x' + _signature[66:-2])
+            v = HexBytes('0x' + _signature[-2:])
+            result: SignatureData = SignatureData(**{
+                "signature": signature,
+                "r": r,
+                "s": s,
+                "v": v
             })
-            return Result
+            logger.success(f"\n[Utils][signature_to_rsv]\n[signature]{_signature}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}")
+            return result
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][SignatureToRSV]Failed\n[Signature]{Signature}\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][signature_to_rsv]Failed\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
     @staticmethod
-    def RSVToSignature(R: str, S: str, V: str) -> SignatureData:
+    def rsv_to_signature(r: HexBytes, s: HexBytes, v: HexBytes) -> Optional[SignatureData]:
         """
-        将 R S V 合并成签名。
+        将 R,S,V 合并成签名。
 
         参数：
-            R (str): 签名 r 值。含 0x 前缀的十六进制形式。
-            S (str): 签名 s 值。含 0x 前缀的十六进制形式。
-            V (int): 签名 v 值。含 0x 前缀的十六进制形式。
+            r (hexbytes.HexBytes): 签名 r 值
+            s (hexbytes.HexBytes): 签名 s 值
+            v (hexbytes.HexBytes): 签名 v 值
 
         返回值：
-            Result (SignatureData): 合并结果。当出现异常时返回 None 。
-            {"Signature"|"R"|"S"|"V"}
+            result (Optional[SignatureData]): 合并结果
+            {"signature"|"r"|"s"|"v"}
         """
 
         try:
-            R, S, V = hex(int(R, 16)), hex(int(S, 16)), hex(int(V, 16))
-            assert (len(R) == 64 + 2 and len(S) == 64 + 2 and len(V) == 2 + 2)
-            Signature = '0x' + R[2:] + S[2:] + V[2:]
-            logger.success(f"\n[BlockchainUtils][RSVToSignature]\n[R]{R}\n[S]{S}\n[V]{V}\n[Signature]{Signature}\n{LOG_DIVIDER_LINE}")
-            Result: SignatureData = SignatureData(**{
-                "Signature": Signature,
-                "R": R,
-                "S": S,
-                "V": V
+            _r, _s, _v = r.hex(), s.hex(), v.hex()
+            assert (len(_r) == 64 + 2 and len(_s) == 64 + 2 and len(_v) == 2 + 2)
+            signature = HexBytes('0x' + _r[2:] + _s[2:] + _v[2:])
+            result: SignatureData = SignatureData(**{
+                "signature": signature,
+                "r": r,
+                "s": s,
+                "v": v
             })
-            return Result
+            logger.success(f"\n[Utils][rsv_to_signature]\n[r]{_r}\n[s]{_s}\n[v]{_v}\n[signature]{signature.hex()}\n{LOG_DIVIDER_LINE}")
+            return result
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][RSVToSignature]Failed\n[R]{R}\n[S]{S}\n[V]{V}\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][rsv_to_signature]Failed\n[r]{r}\n[s]{s}\n[v]{v}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
     @staticmethod
-    def RecoverMessageString(Message: str, Signature: str) -> str:
+    def recover_message_string(message: str, signature: HexBytes) -> Optional[SignedMessageData]:
         """
         通过消息原文和签名还原出签署者的账户地址。
 
         参数：
-            Message (str): 消息原文
-            Signature (str): 签名
+            message (str): 消息原文
+            signature (hexbytes.HexBytes): 签名
 
         返回值：
-            Signer (str): 签署者的账户地址。当出现异常时返回 None 。
+            signer (Optional[SignedMessageData]): 还原结果
         """
 
         try:
-            Signer = EthAccount.recover_message(encode_defunct(text=Message), signature=Signature)
-            logger.success(f"\n[BlockchainUtils][RecoverMessage]\n[Message]{Message}\n[Signature]{Signature}\n[Signer]{Signer}\n{LOG_DIVIDER_LINE}")
-            return Signer
+            signable_message = encode_defunct(text=message)
+            message_hash = _hash_eip191_message(signable_message)
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
+            signature_data = Utils.signature_to_rsv(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": message,
+                "signer": signer,
+                "signature_data": signature_data
+            })
+            logger.success(f"\n[Utils][recover_message_string]\n[message_hash]{message_hash}\n[message]{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}")  # type: ignore
+            return signed_message_data
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][RecoverMessage]Failed\n[Message]{Message}\n[Signature]{Signature}\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][recover_message_string]Failed\n[message]{message}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
     @staticmethod
-    def RecoverMessageHash(MessageHash: str, Signature: str) -> str:
+    def recover_message_hash(message_hash: HexBytes, signature: HexBytes) -> Optional[SignedMessageData]:
         """
         通过消息哈希和签名还原出签署者的账户地址。
 
         参数：
-            MessageHash (str): 消息哈希
-            Signature (str): 签名
+            message_hash (hexbytes.HexBytes): 消息哈希
+            signature (hexbytes.HexBytes): 签名
 
         返回值：
-            Signer (str): 签署者的账户地址。当出现异常时返回 None 。
+            signed_message_data (Optional[SignedMessageData]): 还原结果
+            {"message_hash"|"message"|"signer"|"signature_data"}
         """
 
         try:
-            Signer = EthAccount._recover_hash(MessageHash, signature=Signature)
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount._recover_hash(message_hash, signature=signature))
+            signature_data = Utils.signature_to_rsv(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": None,
+                "signer": signer,
+                "signature_data": signature_data
+            })
             logger.success(
-                f"\n[BlockchainUtils][RecoverMessageByHash]\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[Signer]{Signer}\n{LOG_DIVIDER_LINE}"
+                f"\n[Utils][recover_message_hash]\n[message_hash]{message_hash.hex()}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
             )
-            return Signer
+            return signed_message_data
         except Exception:
-            ExceptionInformation = format_exc()
+            exception_information = format_exc()
             logger.error(
-                f"\n[BlockchainUtils][RecoverMessageByHash]Failed\n[MessageHash]{MessageHash}\n[Signature]{Signature}\n[ExceptionInformation]{ExceptionInformation}{LOG_DIVIDER_LINE}"
+                f"\n[Utils][recover_message_hash]Failed\n[message_hash]{message_hash}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
