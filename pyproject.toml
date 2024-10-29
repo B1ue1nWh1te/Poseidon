@@ -25,10 +25,11 @@ classifiers=[
 
 [tool.poetry.dependencies]
 python = "^3.9"
+loguru = "^0.7.2"
 web3 = "^6.20.3"
 py-solc-x = "^2.0.3"
 pyevmasm = "^0.2.3"
-loguru = "^0.7.2"
+starkbank-ecdsa = "^2.2.0"
 
 [tool.poetry.group.dev.dependencies]
 python-dotenv = "^1.0.1"

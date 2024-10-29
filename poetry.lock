@@ -2185,6 +2185,21 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 reference = "tsinghua"
 
 [[package]]
+name = "starkbank-ecdsa"
+version = "2.2.0"
+description = "A lightweight and fast pure python ECDSA library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "starkbank-ecdsa-2.2.0.tar.gz", hash = "sha256:9399c3371b899d4a235b68a1ed7919d202fbf024bd2c863ae8ebdad343c2a63a"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua"
+
+[[package]]
 name = "stevedore"
 version = "5.3.0"
 description = "Manage dynamic plugins for Python applications"
@@ -2520,4 +2535,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5428ebaf8bab371f876a5b43f16c38fcf91bc4982c5a8a5751e8f41fd16e7b38"
+content-hash = "30c7295fbafe2e124c28a54351a61c852e19a5aa305c56dbd73c5a938c52c38e"
