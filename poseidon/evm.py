@@ -31,7 +31,7 @@ LOG_DIVIDER_LINE = "-" * 80
 _log_path = os.path.join("logs", "poseidon_evm_{time}.log")
 _version = version("poseidon-python")
 logger.add(_log_path)
-logger.success(f"\n[Poseidon]Current Version [{_version}]\n{LOG_DIVIDER_LINE}")
+logger.success(f"\n[Poseidon][EVM][v{_version}]\n{LOG_DIVIDER_LINE}")
 
 
 @dataclass
@@ -126,7 +126,7 @@ class Chain:
             self.chain_id = self.eth.chain_id
             finish_time = time()
             delay = round((finish_time - start_time) * 1000)
-            logger.success(f"\n[Chain][__init__]Connected to [{rpc_url}] [{delay} ms]{request_params_print}\n{LOG_DIVIDER_LINE}")
+            logger.success(f"\n[Chain][__init__]Connected to [{rpc_url}] [{delay}ms]{request_params_print}\n{LOG_DIVIDER_LINE}")
             self.get_chain_information(show_timeslot=False, show_client_version=False)
         else:
             logger.error(f"\n[Chain][__init__]Failed to connect to [{rpc_url}]\n{request_params_print}\n{LOG_DIVIDER_LINE}")
@@ -151,13 +151,13 @@ class Chain:
 
         timeslot_print = ""
         if show_timeslot:
-            timeslot = int(self.eth.get_block(block_number).get("timestamp", 0) - self.eth.get_block(block_number - 100).get("timestamp", 0))/100
-            timeslot_print = f"[timeslot]{timeslot}s"
+            timeslot = round(int(self.eth.get_block(block_number).get("timestamp", 0) - self.eth.get_block(block_number - 100).get("timestamp", 0))/100, 2)
+            timeslot_print = f"\n[timeslot]{timeslot}s"
 
         client_version_print = ""
         if show_client_version:
             client_version = self.provider.client_version
-            client_version_print = f"[client_version]{client_version}"
+            client_version_print = f"\n[client_version]{client_version}"
 
         chain_information = ChainInformationData(**{
             "chain_id": chain_id,
@@ -167,7 +167,7 @@ class Chain:
             "client_version": client_version if show_client_version else None
         })
         logger.success(
-            f"\n[Chain][get_chain_information]\n[chain_id]{chain_id}\n[block_number]{block_number}\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei\n{timeslot_print}\n{client_version_print}\n{LOG_DIVIDER_LINE}"
+            f"\n[Chain][get_chain_information]\n[chain_id]{chain_id}\n[block_number]{block_number}\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei{timeslot_print}{client_version_print}\n{LOG_DIVIDER_LINE}"
         )
         return chain_information
 
@@ -280,10 +280,10 @@ class Chain:
 
             _transaction_status = 'Success' if transaction_status else 'Failed'
             _transaction_type = "EIP-155" if transaction_type == 0 else "EIP-2930" if transaction_type == 1 else "EIP-1559" if transaction_type == 2 else "EIP-4844" if transaction_type == 3 else "Unknown"
-            gas_price_print = f"[max_fee_per_gas]{Web3.from_wei(max_fee_per_gas, 'gwei')} Gwei\n[max_priority_fee_per_gas]{Web3.from_wei(max_priority_fee_per_gas, 'gwei')} Gwei\n[effective_gas_price]{Web3.from_wei(effective_gas_price, 'gwei')} Gwei" if _transaction_type == "EIP-1559" or _transaction_type == "EIP-4844" else f"\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei"
-            contract_address_print = f"[contract_address]{contract_address}" if contract_address else ""
+            gas_price_print = f"\n[max_fee_per_gas]{Web3.from_wei(max_fee_per_gas, 'gwei')} Gwei\n[max_priority_fee_per_gas]{Web3.from_wei(max_priority_fee_per_gas, 'gwei')} Gwei\n[effective_gas_price]{Web3.from_wei(effective_gas_price, 'gwei')} Gwei" if _transaction_type == "EIP-1559" or _transaction_type == "EIP-4844" else f"\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei"
+            contract_address_print = f"\n[contract_address]{contract_address}" if contract_address else ""
 
-            general_print = f"\n[Chain][get_transaction_receipt_by_hash]\n[transaction_hash]{_transaction_hash.hex()}\n[block_number]{block_number}\n[transaction_index]{transaction_index}\n[status]{_transaction_status}\n[transaction_type]{_transaction_type}\n[action]{action}\n[sender]{sender}\n[to]{to}\n[nonce]{nonce} [value]{value}\n[gas_used]{gas_used} [gas_limit]{gas_limit}\n{gas_price_print}\n{contract_address_print}\n[logs]{logs}\n[input_data]{input_data.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+            general_print = f"\n[Chain][get_transaction_receipt_by_hash]\n[transaction_hash]{_transaction_hash.hex()}\n[block_number]{block_number}\n[transaction_index]{transaction_index}\n[status]{_transaction_status}\n[transaction_type]{_transaction_type}\n[action]{action}\n[sender]{sender}\n[to]{to}\n[nonce]{nonce} [value]{value}\n[gas_used]{gas_used} [gas_limit]{gas_limit}{gas_price_print}{contract_address_print}\n[logs]{logs}\n[input_data]{input_data.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
 
             if transaction_status:
                 logger.success(general_print)
@@ -369,7 +369,7 @@ class Chain:
             gas_price_print = f"\n[max_fee_per_gas]{Web3.from_wei(max_fee_per_gas, 'gwei')} Gwei\n[max_priority_fee_per_gas]{Web3.from_wei(max_priority_fee_per_gas, 'gwei')} Gwei\n[effective_gas_price]{Web3.from_wei(effective_gas_price, 'gwei')} Gwei" if _transaction_type == "EIP-1559" or _transaction_type == "EIP-4844" else f"\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei"
             contract_address_print = f"\n[contract_address]{contract_address}" if contract_address else ""
 
-            general_print = f"\n[Chain][get_transaction_receipt_by_block_id_and_index]\n[transaction_hash]{transaction_hash.hex()}\n[block_number]{block_number}\n[transaction_index]{transaction_index}\n[status]{_transaction_status}\n[transaction_type]{_transaction_type}\n[action]{action}\n[sender]{sender}\n[to]{to}\n[nonce]{nonce} [value]{value}\n[gas_used]{gas_used} [gas_limit]{gas_limit}\n{gas_price_print}\n{contract_address_print}\n[logs]{logs}\n[input_data]{input_data.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+            general_print = f"\n[Chain][get_transaction_receipt_by_block_id_and_index]\n[transaction_hash]{transaction_hash.hex()}\n[block_number]{block_number}\n[transaction_index]{transaction_index}\n[status]{_transaction_status}\n[transaction_type]{_transaction_type}\n[action]{action}\n[sender]{sender}\n[to]{to}\n[nonce]{nonce} [value]{value}\n[gas_used]{gas_used} [gas_limit]{gas_limit}{gas_price_print}{contract_address_print}\n[logs]{logs}\n[input_data]{input_data.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
 
             if transaction_status:
                 logger.success(general_print)
@@ -727,7 +727,7 @@ class Account:
                 })
             })
             logger.success(
-                f"\n[Account][sign_message_string]\n[message_hash]{message_hash}\n[message]{message}\n[signer]{signer}\n[signature]{signature}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+                f"\n[Account][sign_message_string]\n[message_hash]{message_hash.hex()}\n[message]{message}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
             )
             return signed_message_data
         except Exception:
@@ -815,7 +815,7 @@ class Account:
                 })
             })
             logger.success(
-                f"\n[Account][sign_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+                f"\n[Account][sign_typed_message]\n[message_hash]{message_hash.hex()}\n[message]\n{message}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
             )
             return signed_message_data
         except Exception:
@@ -1086,7 +1086,7 @@ class Utils:
             address = Web3.to_checksum_address(account.address)
             private_key = HexBytes(account.key)
             account_data = (address, private_key)
-            logger.success(f"\n[Utils][generate_new_account]\n[address]{address}\n[private_key]{private_key.hex()}\n{LOG_DIVIDER_LINE}")
+            logger.success(f"\n[Utils][generate_new_account]\n[address]{address}\n{LOG_DIVIDER_LINE}")
             return account_data
         except Exception:
             exception_information = format_exc()
@@ -1263,7 +1263,7 @@ class Utils:
 
         try:
             signable_message = encode_defunct(text=message)
-            message_hash = _hash_eip191_message(signable_message)
+            message_hash = HexBytes(_hash_eip191_message(signable_message))
             signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
             signature_data = Utils.generate_signature_data_with_signature(signature)
             signed_message_data = SignedMessageData(**{
@@ -1272,7 +1272,7 @@ class Utils:
                 "signer": signer,
                 "signature_data": signature_data
             })
-            logger.success(f"\n[Utils][recover_message_string]\n[message_hash]{message_hash}\n[message]{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}")  # type: ignore
+            logger.success(f"\n[Utils][recover_message_string]\n[message_hash]{message_hash.hex()}\n[message]{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}")  # type: ignore
             return signed_message_data
         except Exception:
             exception_information = format_exc()
@@ -1333,17 +1333,18 @@ class Utils:
 
         try:
             signable_message = encode_typed_data(domain_data, message_types, message_data)
-            message_hash = _hash_eip191_message(signable_message)
+            message_hash = HexBytes(_hash_eip191_message(signable_message))
+            message = f"{domain_data}\n{message_types}\n{message_data}"
             signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
             signature_data = Utils.generate_signature_data_with_signature(signature)
             signed_message_data = SignedMessageData(**{
                 "message_hash": message_hash,
-                "message": f"{domain_data}\n{message_types}\n{message_data}",
+                "message": message,
                 "signer": signer,
                 "signature_data": signature_data
             })
             logger.success(
-                f"\n[Utils][recover_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message_data}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
+                f"\n[Utils][recover_typed_message]\n[message_hash]{message_hash.hex()}\n[message]\n{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
             )
             return signed_message_data
         except Exception:
@@ -1374,7 +1375,7 @@ class Utils:
             new_v_int = 28 if v_int == 27 else 27
             new_s_bytes = HexBytes(new_s_int.to_bytes(32, byteorder='big'))
             new_v_bytes = HexBytes(new_v_int.to_bytes(1, byteorder='big'))
-            equivalent_signature = Utils.rsv_to_signature(original_signature.r, new_s_bytes, new_v_bytes)  # type: ignore
+            equivalent_signature = Utils.generate_signature_data_with_rsv(original_signature.r, new_s_bytes, new_v_bytes)  # type: ignore
             logger.success(
                 f"\n[Utils][convert_equivalent_signature]\n[original_signature]{signature.hex()}\n[equivalent_signature]{equivalent_signature.signature.hex()}\n[r]{equivalent_signature.r.hex()}\n[s]{equivalent_signature.s.hex()}\n[v]{equivalent_signature.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
             )
