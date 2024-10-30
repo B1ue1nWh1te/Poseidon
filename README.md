@@ -1,6 +1,6 @@
 <div align="center">
 
-[![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?font=Bitter&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fposeidon%2Flogo.svg&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto)](https://github.com/B1ue1nWh1te/Poseidon)
+[![data](https://socialify.git.ci/B1ue1nWh1te/Poseidon/image?font=Bitter&forks=1&issues=1&language=1&logo=https%3A%2F%2Fimg.seaeye.cn%2Fimg%2Fposeidon%2Flogo.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto)](https://github.com/B1ue1nWh1te/Poseidon)
 
 **Poseidon 海神波塞冬**，本工具库对常用的链上交互操作进行了模块化抽象与简洁式封装，
 
@@ -9,7 +9,7 @@
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![Python](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![Release](https://img.shields.io/github/v/release/B1ue1nWh1te/Poseidon)](https://github.com/B1ue1nWh1te/Poseidon/releases/)
-[![Downloads](https://img.shields.io/pypi/dm/poseidon-python)](https://pypi.org/project/poseidon-python/)
+[![Downloads](https://img.shields.io/pypi/dm/poseidon-python?color=%23008BE1)](https://pypi.org/project/poseidon-python/)
 
 </div>
 
@@ -57,7 +57,9 @@ python main.py
 
 # 文档
 
-[**Poseidon Docs**](https://seaverse.gitbook.io/poseidon)
+主要文档：[**Poseidon Docs**](https://seaverse.gitbook.io/poseidon)
+
+其他文档：[**web3.py(v6) Docs**](https://web3py.readthedocs.io/en/v6.20.2/)
 
 # 注意事项
 
