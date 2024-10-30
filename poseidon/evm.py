@@ -1,5 +1,5 @@
 """
-本模块主要基于 web3.py 对常用的 EVM 链上交互操作进行了封装。
+本模块主要基于 web3.py 对常用的 EVM 链上交互操作进行了模块化抽象与简洁式封装。
 """
 
 from eth_account.datastructures import SignedMessage, SignedTransaction
@@ -21,10 +21,10 @@ from traceback import format_exc
 from ellipticcurve.curve import secp256k1
 from eth_account import Account as EthAccount
 from eth_account.messages import encode_defunct, encode_typed_data, _hash_eip191_message
-from web3 import HTTPProvider, utils, Web3
-from web3.middleware.geth_poa import geth_poa_middleware
 from pyevmasm import assemble_hex, disassemble_hex
 from solcx import compile_source, get_solc_version, install_solc, set_solc_version
+from web3 import HTTPProvider, utils, Web3
+from web3.middleware.geth_poa import geth_poa_middleware
 
 LOG_DIVIDER_LINE = "-" * 80
 
@@ -496,7 +496,7 @@ class Account:
             private_key (hexbytes.HexBytes): 账户私钥
 
         成员变量：
-            eth_account (eth_account.Account): eth_account 的 Account 实例
+            eth_account (eth_account.LocalAccount): eth_account 的 LocalAccount 实例
             address (eth_typing.ChecksumAddress): 账户地址
             private_key (hexbytes.HexBytes): 账户私钥
         """
@@ -798,13 +798,14 @@ class Account:
             signable_message = encode_typed_data(domain_data, message_types, message_data)
             signed_message: SignedMessage = self.eth_account.sign_message(signable_message)
             message_hash = signed_message.messageHash
+            message = f"{domain_data}\n{message_types}\n{message_data}"
             signature = signed_message.signature
             r = HexBytes(hex(signed_message.r))
             s = HexBytes(hex(signed_message.s))
             v = HexBytes(hex(signed_message.v))
             signed_message_data = SignedMessageData(**{
                 "message_hash": message_hash,
-                "message": f"{domain_data}\n{message_types}\n{message_data}",
+                "message": message,
                 "signer": signer,
                 "signature_data": SignatureData(**{
                     "signature": signature,
@@ -814,7 +815,7 @@ class Account:
                 })
             })
             logger.success(
-                f"\n[Account][sign_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message_data}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+                f"\n[Account][sign_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
             )
             return signed_message_data
         except Exception:
@@ -827,7 +828,7 @@ class Account:
 
 class Contract:
     """
-    Contract 是合约实例，后续调用合约中的函数时需要基于该实例。
+    Contract 是合约实例，后续需要基于该实例调用合约中的函数。
     """
 
     def __init__(self, account: Account, address: ChecksumAddress, abi: dict) -> None:
@@ -841,7 +842,7 @@ class Contract:
 
         成员变量：
             address (web3.types.ChecksumAddress): 合约地址
-            web3py_contract (web3.HTTPProvider.eth.Contract): web3.py 原生的 contract 实例
+            web3py_contract (web3.HTTPProvider.eth.Contract): web3.py 原生的 Contract 实例
         """
 
         try:
@@ -877,7 +878,7 @@ class Contract:
 
     def call_function_with_parameters(self, value: Wei, gas_price: Optional[Wei], gas_limit: int, function_name: str, *args: Optional[Any]) -> Optional[TransactionReceiptData]:
         """
-        通过传入函数名称及参数来调用该合约内的函数。
+        通过传入函数名称及参数来调用该合约内的函数（可指定发送的原生代币数量、Gas 价格、Gas 最大使用量）。
 
         参数：
             value (web3.types.Wei): 发送的原生代币数量
@@ -907,7 +908,7 @@ class Contract:
             *args (Optional[Any]): 函数参数
 
         返回值：
-            result (Optional[Any]): 调用函数后得到的返回值
+            result (Optional[Any]): 只读函数返回值
         """
 
         try:
@@ -925,7 +926,7 @@ class Contract:
 
     def encode_function_calldata(self, function_name: str, *args: Optional[Any]) -> Optional[HexStr]:
         """
-        通过传入函数名及参数进行编码，相当于生成调用该函数的 CallData 。
+        通过传入函数名及参数进行编码，生成调用该函数的 CallData 。
 
         参数：
             function_name (str): 函数名称
@@ -950,7 +951,7 @@ class Contract:
 
     def decode_function_calldata(self, calldata: HexStr) -> Optional[tuple]:
         """
-        解码对当前合约执行调用的 CallData ，得出所调用的函数名称及其参数值。
+        解码针对当前合约执行调用的 CallData ，得出所调用的函数名称及其参数值。
 
         参数：
             calldata (HexStr): 对当前合约执行调用的 CallData
@@ -1048,9 +1049,9 @@ class Utils:
             return None
 
     @staticmethod
-    def import_abi(file_path: str) -> Optional[dict]:
+    def import_contract_abi(file_path: str) -> Optional[dict]:
         """
-        导入指定的 ABI 文件内容。
+        导入指定的合约 ABI 文件内容。
 
         参数：
             file_path (str): ABI 文件完整路径
@@ -1062,12 +1063,12 @@ class Utils:
         try:
             with open(file_path, 'r', encoding="utf-8") as f:
                 abi = load(f)
-            logger.success(f"\n[Utils][import_abi]\n[file_path]{file_path}\n[abi]{abi}\n{LOG_DIVIDER_LINE}")
+            logger.success(f"\n[Utils][import_contract_abi]\n[file_path]{file_path}\n[abi]{abi}\n{LOG_DIVIDER_LINE}")
             return abi
         except Exception:
             exception_information = format_exc()
             logger.error(
-                f"\n[Utils][import_abi]Failed\n[file_path]{file_path}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+                f"\n[Utils][import_contract_abi]Failed\n[file_path]{file_path}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
@@ -1102,7 +1103,7 @@ class Utils:
         参数：
             mnemonic (str): 助记词字符串，以空格分隔
             passphrase (str = ""): 助记词密码，可为空
-            account_path (str = "m/44'/60'/0'/0/0"): HD账户路径
+            account_path (str = "m/44'/60'/0'/0/0"): 分层确定性钱包账户路径
 
         返回值：
             account_data (Optional[Tuple[ChecksumAddress, HexBytes]]): 由账户地址和私钥组成的元组
@@ -1128,7 +1129,7 @@ class Utils:
     @staticmethod
     def calculate_create_case_contract_address(deployer: ChecksumAddress, nonce: Nonce) -> Optional[ChecksumAddress]:
         """
-        获取某账户以 CREATE 方式部署的合约的地址。
+        计算某账户以 CREATE 方式部署的合约的地址。
 
         参数：
             deployer (eth_typing.ChecksumAddress): 部署者地址
@@ -1154,7 +1155,7 @@ class Utils:
     @staticmethod
     def calculate_create2_case_contract_address(deployer: ChecksumAddress, salt: HexStr, creation_code: HexStr) -> Optional[ChecksumAddress]:
         """
-        获取某合约账户以 CREATE2 方式部署的另一个合约的地址。
+        计算某合约账户以 CREATE2 方式部署的另一个合约的地址。
 
         参数：
             deployer (eth_typing.ChecksumAddress): 部署者地址（此处应该为合约地址）
@@ -1175,6 +1176,213 @@ class Utils:
             exception_information = format_exc()
             logger.error(
                 f"\n[Utils][calculate_create2_case_contract_address]Failed\n[deployer]{deployer}\n[salt]{salt}\n[creation_code]{creation_code}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def generate_signature_data_with_signature(signature: HexBytes) -> Optional[SignatureData]:
+        """
+        使用签名数据生成 poseidon.evm.SignatureData 对象。
+
+        参数：
+            signature (hexbytes.HexBytes): 签名数据
+
+        返回值：
+            result (Optional[SignatureData]): 生成结果
+            {"signature"|"r"|"s"|"v"}
+        """
+
+        try:
+            _signature = signature.hex()
+            assert (len(_signature) == 130 + 2)
+            r = HexBytes('0x' + _signature[2:66])
+            s = HexBytes('0x' + _signature[66:-2])
+            v = HexBytes('0x' + _signature[-2:])
+            result: SignatureData = SignatureData(**{
+                "signature": signature,
+                "r": r,
+                "s": s,
+                "v": v
+            })
+            logger.success(f"\n[Utils][generate_signature_data_with_signature]\n[signature]{_signature}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}")
+            return result
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][generate_signature_data_with_signature]Failed\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def generate_signature_data_with_rsv(r: HexBytes, s: HexBytes, v: HexBytes) -> Optional[SignatureData]:
+        """
+        使用 R,S,V 生成 poseidon.evm.SignatureData 对象。
+
+        参数：
+            r (hexbytes.HexBytes): 签名 r 值
+            s (hexbytes.HexBytes): 签名 s 值
+            v (hexbytes.HexBytes): 签名 v 值
+
+        返回值：
+            result (Optional[SignatureData]): 生成结果
+            {"signature"|"r"|"s"|"v"}
+        """
+
+        try:
+            _r, _s, _v = r.hex(), s.hex(), v.hex()
+            assert (len(_r) == 64 + 2 and len(_s) == 64 + 2 and len(_v) == 2 + 2)
+            signature = HexBytes('0x' + _r[2:] + _s[2:] + _v[2:])
+            result: SignatureData = SignatureData(**{
+                "signature": signature,
+                "r": r,
+                "s": s,
+                "v": v
+            })
+            logger.success(f"\n[Utils][generate_signature_data_with_rsv]\n[r]{_r}\n[s]{_s}\n[v]{_v}\n[signature]{signature.hex()}\n{LOG_DIVIDER_LINE}")
+            return result
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][generate_signature_data_with_rsv]Failed\n[r]{r}\n[s]{s}\n[v]{v}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def recover_message_string(message: str, signature: HexBytes) -> Optional[SignedMessageData]:
+        """
+        通过消息原文和签名还原出签署者的账户地址。
+
+        参数：
+            message (str): 消息原文
+            signature (hexbytes.HexBytes): 签名
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signable_message = encode_defunct(text=message)
+            message_hash = _hash_eip191_message(signable_message)
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
+            signature_data = Utils.generate_signature_data_with_signature(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": message,
+                "signer": signer,
+                "signature_data": signature_data
+            })
+            logger.success(f"\n[Utils][recover_message_string]\n[message_hash]{message_hash}\n[message]{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}")  # type: ignore
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][recover_message_string]Failed\n[message]{message}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def recover_message_hash(message_hash: HexBytes, signature: HexBytes) -> Optional[SignedMessageData]:
+        """
+        通过消息哈希和签名还原出签署者的账户地址。
+
+        参数：
+            message_hash (hexbytes.HexBytes): 消息哈希
+            signature (hexbytes.HexBytes): 签名
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount._recover_hash(message_hash, signature=signature))
+            signature_data = Utils.generate_signature_data_with_signature(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": None,
+                "signer": signer,
+                "signature_data": signature_data
+            })
+            logger.success(
+                f"\n[Utils][recover_message_hash]\n[message_hash]{message_hash.hex()}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
+            )
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][recover_message_hash]Failed\n[message_hash]{message_hash}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def recover_typed_message(domain_data: dict, message_types: dict, message_data: dict, signature: HexBytes) -> Optional[SignedMessageData]:
+        """
+        通过结构化消息数据和签名还原出签署者的账户地址。
+
+        参数：
+            domain_data (dict): 域数据
+            message_types (dict): 消息类型定义
+            message_data (dict): 消息数据
+            signature (hexbytes.HexBytes): 签名
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signable_message = encode_typed_data(domain_data, message_types, message_data)
+            message_hash = _hash_eip191_message(signable_message)
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
+            signature_data = Utils.generate_signature_data_with_signature(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_hash,
+                "message": f"{domain_data}\n{message_types}\n{message_data}",
+                "signer": signer,
+                "signature_data": signature_data
+            })
+            logger.success(
+                f"\n[Utils][recover_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message_data}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
+            )
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][recover_typed_message]Failed\n[domain_data]{domain_data}\n[message_data]{message_data}\n[message_types]{message_types}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
+    def convert_equivalent_signature(signature: HexBytes) -> Optional[SignatureData]:
+        """
+        根据 ECDSA 签名可延展性原理，生成另一个等效的签名。
+
+        参数:
+            signature (hexbytes.HexBytes): 原始签名
+
+        返回值:
+            equivalent_signature (Optional[SignatureData]): 等效签名数据
+            {"signature"|"r"|"s"|"v"}
+        """
+
+        try:
+            original_signature = Utils.generate_signature_data_with_signature(signature)
+            s_int = int.from_bytes(original_signature.s, byteorder='big')  # type: ignore
+            v_int = int.from_bytes(original_signature.v, byteorder='big')  # type: ignore
+            new_s_int = secp256k1.N - s_int
+            new_v_int = 28 if v_int == 27 else 27
+            new_s_bytes = HexBytes(new_s_int.to_bytes(32, byteorder='big'))
+            new_v_bytes = HexBytes(new_v_int.to_bytes(1, byteorder='big'))
+            equivalent_signature = Utils.rsv_to_signature(original_signature.r, new_s_bytes, new_v_bytes)  # type: ignore
+            logger.success(
+                f"\n[Utils][convert_equivalent_signature]\n[original_signature]{signature.hex()}\n[equivalent_signature]{equivalent_signature.signature.hex()}\n[r]{equivalent_signature.r.hex()}\n[s]{equivalent_signature.s.hex()}\n[v]{equivalent_signature.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
+            )
+            return equivalent_signature
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][convert_equivalent_signature]Failed\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
 
@@ -1221,211 +1429,5 @@ class Utils:
             exception_information = format_exc()
             logger.error(
                 f"\n[Utils][bytecode_to_assembly_legacy]Failed\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def signature_to_rsv(signature: HexBytes) -> Optional[SignatureData]:
-        """
-        将签名解析成 R,S,V 。
-
-        参数：
-            signature (hexbytes.HexBytes): 签名数据
-
-        返回值：
-            result (Optional[SignatureData]): 解析结果
-            {"signature"|"r"|"s"|"v"}
-        """
-
-        try:
-            _signature = signature.hex()
-            assert (len(_signature) == 130 + 2)
-            r = HexBytes('0x' + _signature[2:66])
-            s = HexBytes('0x' + _signature[66:-2])
-            v = HexBytes('0x' + _signature[-2:])
-            result: SignatureData = SignatureData(**{
-                "signature": signature,
-                "r": r,
-                "s": s,
-                "v": v
-            })
-            logger.success(f"\n[Utils][signature_to_rsv]\n[signature]{_signature}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}")
-            return result
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][signature_to_rsv]Failed\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def rsv_to_signature(r: HexBytes, s: HexBytes, v: HexBytes) -> Optional[SignatureData]:
-        """
-        将 R,S,V 合并成签名。
-
-        参数：
-            r (hexbytes.HexBytes): 签名 r 值
-            s (hexbytes.HexBytes): 签名 s 值
-            v (hexbytes.HexBytes): 签名 v 值
-
-        返回值：
-            result (Optional[SignatureData]): 合并结果
-            {"signature"|"r"|"s"|"v"}
-        """
-
-        try:
-            _r, _s, _v = r.hex(), s.hex(), v.hex()
-            assert (len(_r) == 64 + 2 and len(_s) == 64 + 2 and len(_v) == 2 + 2)
-            signature = HexBytes('0x' + _r[2:] + _s[2:] + _v[2:])
-            result: SignatureData = SignatureData(**{
-                "signature": signature,
-                "r": r,
-                "s": s,
-                "v": v
-            })
-            logger.success(f"\n[Utils][rsv_to_signature]\n[r]{_r}\n[s]{_s}\n[v]{_v}\n[signature]{signature.hex()}\n{LOG_DIVIDER_LINE}")
-            return result
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][rsv_to_signature]Failed\n[r]{r}\n[s]{s}\n[v]{v}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def recover_message_string(message: str, signature: HexBytes) -> Optional[SignedMessageData]:
-        """
-        通过消息原文和签名还原出签署者的账户地址。
-
-        参数：
-            message (str): 消息原文
-            signature (hexbytes.HexBytes): 签名
-
-        返回值：
-            signer (Optional[SignedMessageData]): 还原结果
-        """
-
-        try:
-            signable_message = encode_defunct(text=message)
-            message_hash = _hash_eip191_message(signable_message)
-            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
-            signature_data = Utils.signature_to_rsv(signature)
-            signed_message_data = SignedMessageData(**{
-                "message_hash": message_hash,
-                "message": message,
-                "signer": signer,
-                "signature_data": signature_data
-            })
-            logger.success(f"\n[Utils][recover_message_string]\n[message_hash]{message_hash}\n[message]{message}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}")  # type: ignore
-            return signed_message_data
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][recover_message_string]Failed\n[message]{message}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def recover_message_hash(message_hash: HexBytes, signature: HexBytes) -> Optional[SignedMessageData]:
-        """
-        通过消息哈希和签名还原出签署者的账户地址。
-
-        参数：
-            message_hash (hexbytes.HexBytes): 消息哈希
-            signature (hexbytes.HexBytes): 签名
-
-        返回值：
-            signed_message_data (Optional[SignedMessageData]): 还原结果
-            {"message_hash"|"message"|"signer"|"signature_data"}
-        """
-
-        try:
-            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount._recover_hash(message_hash, signature=signature))
-            signature_data = Utils.signature_to_rsv(signature)
-            signed_message_data = SignedMessageData(**{
-                "message_hash": message_hash,
-                "message": None,
-                "signer": signer,
-                "signature_data": signature_data
-            })
-            logger.success(
-                f"\n[Utils][recover_message_hash]\n[message_hash]{message_hash.hex()}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
-            )
-            return signed_message_data
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][recover_message_hash]Failed\n[message_hash]{message_hash}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def recover_typed_message(domain_data: dict, message_types: dict, message_data: dict, signature: HexBytes) -> Optional[SignedMessageData]:
-        """
-        通过结构化消息数据和签名还原出签署者的账户地址。
-
-        参数：
-            domain_data (dict): 域数据
-            message_types (dict): 消息类型定义
-            message_data (dict): 消息数据
-            signature (hexbytes.HexBytes): 签名
-
-        返回值：
-            signed_message_data (Optional[SignedMessageData]): 还原结果
-            {"message_hash"|"message"|"signer"|"signature_data"}
-        """
-
-        try:
-            signable_message = encode_typed_data(domain_data, message_types, message_data)
-            message_hash = _hash_eip191_message(signable_message)
-            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(signable_message, signature=signature))
-            signature_data = Utils.signature_to_rsv(signature)
-            signed_message_data = SignedMessageData(**{
-                "message_hash": message_hash,
-                "message": f"{domain_data}\n{message_types}\n{message_data}",
-                "signer": signer,
-                "signature_data": signature_data
-            })
-            logger.success(
-                f"\n[Utils][recover_typed_message]\n[message_hash]{message_hash.hex()}\n[message]{message_data}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
-            )
-            return signed_message_data
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][recover_typed_message]Failed\n[domain_data]{domain_data}\n[message_data]{message_data}\n[message_types]{message_types}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
-            )
-            return None
-
-    @staticmethod
-    def convert_equivalent_signature(signature: HexBytes) -> Optional[SignatureData]:
-        """
-        根据 ECDSA 签名可延展性原理，生成另一个等效的签名。
-
-        参数:
-            signature (hexbytes.HexBytes): 原始签名
-
-        返回值:
-            equivalent_signature (Optional[SignatureData]): 等效签名数据
-            {"signature"|"r"|"s"|"v"}
-        """
-
-        try:
-            original_signature = Utils.signature_to_rsv(signature)
-            s_int = int.from_bytes(original_signature.s, byteorder='big')  # type: ignore
-            v_int = int.from_bytes(original_signature.v, byteorder='big')  # type: ignore
-            new_s_int = secp256k1.N - s_int
-            new_v_int = 28 if v_int == 27 else 27
-            new_s_bytes = HexBytes(new_s_int.to_bytes(32, byteorder='big'))
-            new_v_bytes = HexBytes(new_v_int.to_bytes(1, byteorder='big'))
-            equivalent_signature = Utils.rsv_to_signature(original_signature.r, new_s_bytes, new_v_bytes)  # type: ignore
-            logger.success(
-                f"\n[Utils][convert_equivalent_signature]\n[original_signature]{signature.hex()}\n[equivalent_signature]{equivalent_signature.signature.hex()}\n[r]{equivalent_signature.r.hex()}\n[s]{equivalent_signature.s.hex()}\n[v]{equivalent_signature.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
-            )
-            return equivalent_signature
-        except Exception:
-            exception_information = format_exc()
-            logger.error(
-                f"\n[Utils][convert_equivalent_signature]Failed\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
             )
             return None
