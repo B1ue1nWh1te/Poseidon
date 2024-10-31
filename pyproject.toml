@@ -32,7 +32,6 @@ pyevmasm = "^0.2.3"
 starkbank-ecdsa = "^2.2.0"
 
 [tool.poetry.group.dev.dependencies]
-python-dotenv = "^1.0.1"
 bandit = "^1.7.10"
 
 [[tool.poetry.source]]
