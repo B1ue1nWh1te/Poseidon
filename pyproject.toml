@@ -5,7 +5,7 @@ description = "海神波塞冬，本工具库对常用的链上交互操作进�
 keywords = ["blockchain", "web3", "ethereum", "evm", "tooling"]
 authors = ["B1ue1nWh1te <themagicdeepsea@gmail.com>"]
 repository = "https://github.com/B1ue1nWh1te/Poseidon"
-documentation = "https://seaverse.gitbook.io/poseidon"
+documentation = "https://poseidon.seaeye.cn/"
 packages = [{ include = "poseidon" }]
 include = ["poseidon/py.typed"]
 license = "GPL-3.0"

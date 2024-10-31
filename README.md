@@ -142,7 +142,7 @@ result = contract_instance.functions.anyReadOnlyFunction("(param1)", "(param2)")
 
 # 文档
 
-主要文档：[**Poseidon Docs**](https://seaverse.gitbook.io/poseidon)
+主要文档：[**Poseidon Docs**](https://poseidon.seaeye.cn/)
 
 其他文档：[**web3.py(v6) Docs**](https://web3py.readthedocs.io/en/v6.20.2/)
 
