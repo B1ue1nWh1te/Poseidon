@@ -55,6 +55,10 @@ python main.py
 
 # 示例
 
+* [测试样例](https://github.com/B1ue1nWh1te/Poseidon/tree/main/tests)
+
+* [模板库](https://github.com/B1ue1nWh1te/PoseidonTemplate)
+
 以下通过对比 Poseidon 与 web3.py 的使用，展示 Poseidon 的简洁性优势。
 
 ## 使用 Poseidon
