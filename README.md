@@ -33,7 +33,7 @@ pip install -U poseidon-python
 pip install -U poetry
 ```
 
-克隆 [模板库](https://github.com/B1ue1nWh1te/PoseidonTemplate) 至本地（也可先使用该模板库创建一个副本至你自己的 Github 仓库中再克隆）：
+克隆 模板库 至本地（也可先使用该模板库创建一个副本至你自己的 Github 仓库中再克隆）：
 
 ```bash
 git clone git@github.com:B1ue1nWh1te/PoseidonTemplate.git
@@ -161,3 +161,6 @@ result = contract_instance.functions.anyReadOnlyFunction("(param1)", "(param2)")
 4. 如果你在使用过程中遇到了问题或者有任何好的想法和建议，欢迎提 [**Issues**](https://github.com/B1ue1nWh1te/Poseidon/issues) 或 [**PRs**](https://github.com/B1ue1nWh1te/Poseidon/pulls) 进行反馈和贡献。
 
 5. 本工具库**开源的目的是进行技术开发上的交流与分享**，不涉及任何其他方面的内容。原则上该工具只应该在开发测试环境下与区块链测试网进行交互调试，作者并不提倡在其他情况下使用。若开发者自行选择在具有经济价值的区块链主网中使用，所造成的任何影响由其个人负责，与作者本人无关。
+
+
+[![Star History Chart](https://api.star-history.com/svg?repos=B1ue1nWh1te/Poseidon&type=Date)](https://star-history.com/#B1ue1nWh1te/Poseidon&Date)
