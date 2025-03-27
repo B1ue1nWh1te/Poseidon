@@ -32,9 +32,6 @@ py-solc-x = "^2.0.3"
 pyevmasm = "^0.2.3"
 starkbank-ecdsa = "^2.2.0"
 
-[tool.poetry.group.dev.dependencies]
-bandit = "^1.8.3"
-
 [[tool.poetry.source]]
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"

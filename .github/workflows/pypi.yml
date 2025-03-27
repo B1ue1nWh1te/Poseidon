@@ -26,6 +26,6 @@ jobs:
 
       - name: Build And Publish To PyPI
         run: |
-          poetry sync --without dev
+          poetry install
           poetry build
           poetry publish
