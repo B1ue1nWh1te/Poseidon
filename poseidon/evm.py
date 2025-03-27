@@ -279,8 +279,8 @@ class Chain:
             })
 
             _transaction_status = 'Success' if transaction_status else 'Failed'
-            _transaction_type = "EIP-155" if transaction_type == 0 else "EIP-2930" if transaction_type == 1 else "EIP-1559" if transaction_type == 2 else "EIP-4844" if transaction_type == 3 else "Unknown"
-            gas_price_print = f"\n[max_fee_per_gas]{Web3.from_wei(max_fee_per_gas, 'gwei')} Gwei\n[max_priority_fee_per_gas]{Web3.from_wei(max_priority_fee_per_gas, 'gwei')} Gwei\n[effective_gas_price]{Web3.from_wei(effective_gas_price, 'gwei')} Gwei" if _transaction_type == "EIP-1559" or _transaction_type == "EIP-4844" else f"\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei"
+            _transaction_type = "EIP-155" if transaction_type == 0 else "EIP-2930" if transaction_type == 1 else "EIP-1559" if transaction_type == 2 else "EIP-4844" if transaction_type == 3 else "EIP-7702" if transaction_type == 4 else "Unknown"
+            gas_price_print = f"\n[max_fee_per_gas]{Web3.from_wei(max_fee_per_gas, 'gwei')} Gwei\n[max_priority_fee_per_gas]{Web3.from_wei(max_priority_fee_per_gas, 'gwei')} Gwei\n[effective_gas_price]{Web3.from_wei(effective_gas_price, 'gwei')} Gwei" if _transaction_type == "EIP-1559" or _transaction_type == "EIP-4844" or _transaction_type == "EIP-7702" else f"\n[gas_price]{Web3.from_wei(gas_price, 'gwei')} Gwei"
             contract_address_print = f"\n[contract_address]{contract_address}" if contract_address else ""
 
             general_print = f"\n[Chain][get_transaction_receipt_by_hash]\n[transaction_hash]{_transaction_hash.hex()}\n[block_number]{block_number}\n[transaction_index]{transaction_index}\n[status]{_transaction_status}\n[transaction_type]{_transaction_type}\n[action]{action}\n[sender]{sender}\n[to]{to}\n[nonce]{nonce} [value]{value}\n[gas_used]{gas_used} [gas_limit]{gas_limit}{gas_price_print}{contract_address_print}\n[logs]{logs}\n[input_data]{input_data.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
@@ -570,13 +570,13 @@ class Account:
             txn = {
                 "chainId": self._chain.chain_id,
                 "from": sender,
+                "to": Web3.to_checksum_address(to) if to else None,
                 "value": value,
                 "gas": gas_limit,
                 "gasPrice": gas_price if gas_price else self._chain.eth.gas_price,
                 "nonce": self._chain.eth.get_transaction_count(sender, block_identifier="latest"),
                 "data": data,
             }
-            txn["to"] = Web3.to_checksum_address(to) if to else None
             signed_txn: SignedTransaction = self.eth_account.sign_transaction(txn)
             txn["gasPrice"] = f'{Web3.from_wei(txn["gasPrice"],"gwei")} Gwei'
             logger.info(f"\n[Account][send_transaction]\n[txn]{dumps(txn, indent=2)}\n{LOG_DIVIDER_LINE}")
@@ -617,6 +617,7 @@ class Account:
             txn = {
                 "chainId": self._chain.chain_id,
                 "from": sender,
+                "to": Web3.to_checksum_address(to) if to else None,
                 "value": value,
                 "gas": gas_limit,
                 "maxFeePerGas": base_fee + max_priority_fee,
@@ -624,7 +625,6 @@ class Account:
                 "nonce": self._chain.eth.get_transaction_count(sender, block_identifier="latest"),
                 "data": data,
             }
-            txn["to"] = Web3.to_checksum_address(to) if to else None
             signed_txn: SignedTransaction = self.eth_account.sign_transaction(txn)
             txn["maxFeePerGas"] = f'{Web3.from_wei(txn["maxFeePerGas"],"gwei")} Gwei'
             txn["maxPriorityFeePerGas"] = f'{Web3.from_wei(txn["maxPriorityFeePerGas"],"gwei")} Gwei'
@@ -737,9 +737,51 @@ class Account:
             )
             return None
 
+    def sign_message_raw_hash(self, message_raw_hash: HexBytes) -> Optional[SignedMessageData]:
+        """
+        对消息哈希进行原生签名。
+
+        参数：
+            message_raw_hash (hexbytes.HexBytes): 待签名消息哈希
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signer = self.eth_account.address
+            signed_message: SignedMessage = self.eth_account.signHash(message_raw_hash)
+            _message_raw_hash = signed_message.messageHash
+            signature = signed_message.signature
+            r = HexBytes(hex(signed_message.r))
+            s = HexBytes(hex(signed_message.s))
+            v = HexBytes(hex(signed_message.v))
+            signed_message_data = SignedMessageData(**{
+                "message_hash": _message_raw_hash,
+                "message": None,
+                "signer": signer,
+                "signature_data": SignatureData(**{
+                    "signature": signature,
+                    "r": r,
+                    "s": s,
+                    "v": v
+                })
+            })
+            logger.success(
+                f"\n[Account][sign_message_raw_hash]\n[message_raw_hash]{_message_raw_hash.hex()}\n[signer]{signer}\n[signature]{signature.hex()}\n[r]{r.hex()}\n[s]{s.hex()}\n[v]{v.hex()}\n{LOG_DIVIDER_LINE}"
+            )
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Account][sign_message_raw_hash]Failed\n[message_raw_hash]{message_raw_hash}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
     def sign_message_hash(self, message_hash: HexBytes) -> Optional[SignedMessageData]:
         """
-        对消息哈希进行签名。
+        对消息哈希进行 EIP-191 签名。
 
         参数：
             message_hash (hexbytes.HexBytes): 待签名消息哈希
@@ -751,7 +793,7 @@ class Account:
 
         try:
             signer = self.eth_account.address
-            signed_message: SignedMessage = self.eth_account.signHash(message_hash)
+            signed_message: SignedMessage = self.eth_account.sign_message(encode_defunct(hexstr=message_hash.hex()))
             _message_hash = signed_message.messageHash
             signature = signed_message.signature
             r = HexBytes(hex(signed_message.r))
@@ -913,8 +955,9 @@ class Contract:
 
         try:
             result = self.web3py_contract.functions[function_name](*args).call()  # type: ignore
+            result_print = result.hex() if isinstance(result, HexBytes) else result
             logger.success(
-                f"\n[Contract][read_only_call_function]\n[contract_address]{self.address}\n[function]{function_name}{args}\n[result]{result}\n{LOG_DIVIDER_LINE}"
+                f"\n[Contract][read_only_call_function]\n[contract_address]{self.address}\n[function]{function_name}{args}\n[result]{result_print}\n{LOG_DIVIDER_LINE}"
             )
             return result
         except Exception:
@@ -1282,6 +1325,40 @@ class Utils:
             return None
 
     @staticmethod
+    def recover_message_raw_hash(message_raw_hash: HexBytes, signature: HexBytes) -> Optional[SignedMessageData]:
+        """
+        通过消息哈希和签名还原出签署者的账户地址。
+
+        参数：
+            message_raw_hash (hexbytes.HexBytes): 消息哈希
+            signature (hexbytes.HexBytes): 签名
+
+        返回值：
+            signed_message_data (Optional[SignedMessageData]): 签名数据
+            {"message_hash"|"message"|"signer"|"signature_data"}
+        """
+
+        try:
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount._recover_hash(message_raw_hash, signature=signature))
+            signature_data = Utils.generate_signature_data_with_signature(signature)
+            signed_message_data = SignedMessageData(**{
+                "message_hash": message_raw_hash,
+                "message": None,
+                "signer": signer,
+                "signature_data": signature_data
+            })
+            logger.success(
+                f"\n[Utils][recover_message_raw_hash]\n[message_raw_hash]{message_raw_hash.hex()}\n[signer]{signer}\n[signature]{signature_data.signature.hex()}\n[r]{signature_data.r.hex()}\n[s]{signature_data.s.hex()}\n[v]{signature_data.v.hex()}\n{LOG_DIVIDER_LINE}"  # type: ignore
+            )
+            return signed_message_data
+        except Exception:
+            exception_information = format_exc()
+            logger.error(
+                f"\n[Utils][recover_message_raw_hash]Failed\n[message_raw_hash]{message_raw_hash}\n[signature]{signature}\n[exception_information]{exception_information}\n{LOG_DIVIDER_LINE}"
+            )
+            return None
+
+    @staticmethod
     def recover_message_hash(message_hash: HexBytes, signature: HexBytes) -> Optional[SignedMessageData]:
         """
         通过消息哈希和签名还原出签署者的账户地址。
@@ -1296,7 +1373,7 @@ class Utils:
         """
 
         try:
-            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount._recover_hash(message_hash, signature=signature))
+            signer: ChecksumAddress = Web3.to_checksum_address(EthAccount.recover_message(encode_defunct(hexstr=message_hash.hex()), signature=signature))
             signature_data = Utils.generate_signature_data_with_signature(signature)
             signed_message_data = SignedMessageData(**{
                 "message_hash": message_hash,

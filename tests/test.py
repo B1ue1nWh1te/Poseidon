@@ -3,11 +3,11 @@ from poseidon.evm import Chain, Account, Contract, Utils
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
-# rpc_url = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
-rpc_url = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public"
-# rpc_url = "https://optimism-sepolia.blockpi.network/v1/rpc/public"
-# rpc_url = "https://bsc-testnet.blockpi.network/v1/rpc/public"
-# rpc_url = "https://polygon-amoy.blockpi.network/v1/rpc/public"
+rpc_url = "https://ethereum-sepolia-rpc.publicnode.com"
+# rpc_url = "https://arbitrum-sepolia-rpc.publicnode.com"
+# rpc_url = "https://optimism-sepolia-rpc.publicnode.com"
+# rpc_url = "https://bsc-testnet-rpc.publicnode.com"
+# rpc_url = "https://polygon-amoy-bor-rpc.publicnode.com"
 
 chain = Chain(rpc_url)
 chain_information = chain.get_chain_information(show_client_version=True, show_timeslot=True)
@@ -20,8 +20,10 @@ input(f"Waiting for sending some testETH to [{address}] ...")
 account = Account(chain, private_key)
 signature_data_1 = account.sign_message_string("test")
 signed_message_data_1 = Utils.recover_message_string("test", signature_data_1.signature_data.signature)
-signature_data_2 = account.sign_message_hash(signature_data_1.message_hash)
-signed_message_data_2 = Utils.recover_message_hash(signature_data_2.message_hash, signature_data_2.signature_data.signature)
+signature_data_2 = account.sign_message_raw_hash(signature_data_1.message_hash)
+signed_message_data_2 = Utils.recover_message_raw_hash(signature_data_2.message_hash, signature_data_2.signature_data.signature)
+signature_data_3 = account.sign_message_hash(signature_data_1.message_hash)
+signed_message_data_3 = Utils.recover_message_hash(signature_data_1.message_hash, signature_data_3.signature_data.signature)
 
 domain_data = {
     "name": "Test",
@@ -39,8 +41,8 @@ message_data = {
     "name": "test",
     "wallet": account.address
 }
-signature_data_3 = account.sign_typed_message(domain_data, message_types, message_data)
-signed_message_data_3 = Utils.recover_typed_message(domain_data, message_types, message_data, signature_data_3.signature_data.signature)
+signature_data_4 = account.sign_typed_message(domain_data, message_types, message_data)
+signed_message_data_4 = Utils.recover_typed_message(domain_data, message_types, message_data, signature_data_4.signature_data.signature)
 
 converted_signature_data_1 = Utils.convert_equivalent_signature(signature_data_1.signature_data.signature)
 converted_signed_message_data_1 = Utils.recover_message_string("test", converted_signature_data_1.signature)
